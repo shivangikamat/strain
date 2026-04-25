@@ -1,3 +1,34 @@
+.mode-toggle {
+  display: flex;
+  gap: 0.5rem;
+  margin: 1rem 0 0.5rem;
+}
+
+.mode-toggle button {
+  padding: 0.45rem 1rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #fff;
+  cursor: pointer;
+  font-weight: 600;
+  color: #475569;
+}
+
+.mode-toggle button.active {
+  background: #1e293b;
+  color: #f8fafc;
+  border-color: #1e293b;
+}
+
+.meta.warn {
+  color: #b45309;
+}
+
+.warn-panel {
+  border-color: #fcd34d;
+  background: #fffbeb;
+}
+
 .emotiscan {
   max-width: 960px;
   margin: 0 auto;

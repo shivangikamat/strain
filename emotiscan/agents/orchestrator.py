@@ -1,10 +1,10 @@
-"""Fixed pipeline: DataCurator → AnalysisEngine → Explainer."""
+"""Fixed pipeline: DataCurator → AnalysisEngine → Explainer (CSV) or DREAMER epoch pipeline."""
 
 from __future__ import annotations
 
 import hashlib
 import re
-from typing import Any
+from typing import Any, Literal
 
 from emotiscan.agents.analysis_engine import AnalysisEngine
 from emotiscan.agents.data_curator import DataCurator
@@ -12,7 +12,7 @@ from emotiscan.agents.explainer import Explainer
 
 
 def _row_index_from_query(query: str, modulo: int) -> int:
-    m = re.search(r"row\s*[=:]?\s*(\d+)", query, re.I)
+    m = re.search(r"(?:row|epoch)\s*[=:]?\s*(\d+)", query, re.I)
     if m:
         return int(m.group(1))
     h = int(hashlib.sha256(query.encode()).hexdigest(), 16)
@@ -29,8 +29,33 @@ class Orchestrator:
         self,
         query: str,
         *,
+        source: Literal["csv", "dreamer"] = "csv",
         csv_path: str | None = None,
+        dreamer_processed_dir: str | None = None,
     ) -> dict[str, Any]:
+        if source == "dreamer":
+            from emotiscan.pipelines.dreamer_analyze import (
+                analyze_dreamer_epoch,
+                dreamer_epoch_count,
+            )
+
+            n = dreamer_epoch_count(dreamer_processed_dir)
+            idx = _row_index_from_query(query, n)
+            analysis = analyze_dreamer_epoch(idx, processed_dir=dreamer_processed_dir)
+            summary = analysis["explanation"].get(
+                "natural_language_explanation",
+                "DREAMER epoch analysis.",
+            )
+            return {
+                "query": query,
+                "source": "dreamer",
+                "epoch_index": analysis["epoch_index"],
+                "subject_id": analysis["subject_id"],
+                "trial_id": analysis["trial_id"],
+                "analysis": analysis,
+                "summary": summary,
+            }
+
         from emotiscan.io.emotions_csv import load_emotions_csv
 
         ds = load_emotions_csv(csv_path, max_rows=None)
@@ -44,6 +69,7 @@ class Orchestrator:
         summary = self.explainer.summarize(analysis)
         return {
             "query": query,
+            "source": "csv",
             "row_index": loaded["row_index"],
             "ground_truth_label": loaded["label_true"],
             "analysis": analysis,

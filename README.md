@@ -29,6 +29,19 @@ feats = extract_features_from_epoch(X[0], sfreq=meta["sfreq"])
 
 4. After export, `GET http://127.0.0.1:8000/dataset/dreamer/meta` returns the manifest JSON.
 
+5. **Subject-holdout VAD model** (Ridge on Welch + channel-variance features):
+
+```bash
+python scripts/train_dreamer_vad.py
+# optional smoke: --max-train-samples 4000
+```
+
+This writes `emotiscan/models/dreamer_vad_multiridge.joblib`. Then `POST /api/analyze/dreamer` and the UI “DREAMER epochs” tab return predictions + explanations.
+
+6. **PyTorch `Dataset`**: `from emotiscan.data import DreamerEpochDataset` — optional `indices` from `train_test_mask_by_subject()` for subject-safe splits.
+
+7. **Agent / API routing**: `POST /api/agent/run` with body `{"query": "epoch=42", "source": "dreamer"}` runs the DREAMER pipeline (optional `dreamer_processed_dir`).
+
 Outputs live under `data/processed/dreamer/` (ignored with `data/` in `.gitignore`).
 
 ## Setup
@@ -70,12 +83,20 @@ Open `http://localhost:5173` and pick a row index to inspect predictions and dem
 
 ## MCP server (`emotiscan-tools`)
 
+**First-time setup (venv, data, Cursor, optional SSE/ngrok):** [docs/mcp-setup-first-steps.md](docs/mcp-setup-first-steps.md).
+
+Quick local stdio:
+
 ```bash
 source .venv/bin/activate
 python -m mcp_server.server
 ```
 
-Register the stdio server in Cursor MCP settings with command `python`, args `-m`, `mcp_server.server`, cwd = this repo, and the activated venv’s `python` if needed.
+Or: `./scripts/run_mcp_stdio.sh`. This repo includes [`.cursor/mcp.json`](.cursor/mcp.json) so Cursor can load **emotiscan-tools** when you open the folder (uses `.venv/bin/python`; create the venv first or edit the path).
+
+SSE for Prompt Opinion + ngrok: `./scripts/run_mcp_sse.sh` — see the first-steps doc. Env template: [`.env.example`](.env.example).
+
+**Prompt Opinion / “Agents Assemble” hackathon:** [docs/prompt-opinion-hackathon.md](docs/prompt-opinion-hackathon.md) (repos, ngrok URL, A2A via `po-adk-python`).
 
 ## Layout
 
@@ -84,7 +105,9 @@ Register the stdio server in Cursor MCP settings with command `python`, args `-m
 - `emotiscan/data/dreamer_epochs.py` — mmap manifest helpers
 - `scripts/export_dreamer_epochs.py` — MAT → `data/processed/dreamer/` tensors
 - `api/` — FastAPI orchestrator
-- `mcp_server/` — MCP stdio tools wrapping the same library
+- `mcp_server/` — MCP tools (stdio default; SSE for remote)
+- `.cursor/mcp.json` — Cursor project MCP entry for **emotiscan-tools**
+- `docs/mcp-setup-first-steps.md` — MCP setup checklist
 - `scripts/` — Kaggle download helper, training CLI
 - `notebooks/01_kaggle_eeg_eda.ipynb` — exploratory notebook
 - `backend/frontend/` — React + Recharts dashboard
