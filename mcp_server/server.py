@@ -28,6 +28,7 @@ from emotiscan.models.classifier import (
     explain_decision,
     load_classifier_pipeline,
 )
+from emotiscan.io.fhir import generate_fhir_bundle
 from emotiscan.pipelines.dreamer_analyze import analyze_dreamer_epoch
 from emotiscan.screening.mental_health import screen_mental_health
 
@@ -146,6 +147,19 @@ def screen_mental_health_tool(csv_path: str | None = None, row_index: int = 0) -
     feats = extract_features(row, ds.feature_names)
     cls = classify_emotion(row, feature_names=ds.feature_names, bundle=bundle)
     return _json(screen_mental_health(cls, feats))
+
+
+@mcp.tool()
+def export_fhir_tool(csv_path: str | None = None, row_index: int = 0, patient_id: str = "demo-alex") -> str:
+    """Generate a FHIR R4 Bundle containing mental health risk assessments from EEG screening."""
+    ds = load_emotions_csv(csv_path)
+    idx = row_index % ds.X.shape[0]
+    row = ds.X[idx]
+    bundle = load_classifier_pipeline()
+    feats = extract_features(row, ds.feature_names)
+    cls = classify_emotion(row, feature_names=ds.feature_names, bundle=bundle)
+    screening = screen_mental_health(cls, feats)
+    return _json(generate_fhir_bundle(screening, patient_id=patient_id))
 
 
 def main() -> None:
