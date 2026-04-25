@@ -83,8 +83,19 @@ def screen_mental_health_tool(csv_path: str | None = None, row_index: int = 0) -
     return _json(screen_mental_health(cls, feats))
 
 
+import argparse
+
 def main() -> None:
-    mcp.run()
+    parser = argparse.ArgumentParser(description="EmotiScan MCP Server")
+    parser.add_argument("--sse", action="store_true", help="Run over SSE for promptopinion.ai integration")
+    parser.add_argument("--port", type=int, default=8001, help="Port to run the SSE server on")
+    args = parser.parse_args()
+
+    if args.sse:
+        print(f"Starting EmotiScan FastMCP Server on Server-Sent Events (SSE) mode... [Port {args.port}]")
+        mcp.run(transport="sse", host="127.0.0.1", port=args.port)
+    else:
+        mcp.run()
 
 
 if __name__ == "__main__":
