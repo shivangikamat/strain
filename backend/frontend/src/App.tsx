@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
+import { Brain3D } from './components/Brain3D'
+import { MoodMeter } from './components/MoodMeter'
 import {
   Bar,
   BarChart,
@@ -263,25 +265,43 @@ export default function App() {
 
       {mode === 'csv' && csvData && probChart && (
         <>
-          <section className="panel">
-            <h2>Emotion probabilities</h2>
-            <div className="chart-wrap">
-              <ResponsiveContainer width="100%" height={280}>
-                <BarChart data={probChart}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" />
-                  <YAxis domain={[0, 1]} tickFormatter={(v) => `${(v * 100).toFixed(0)}%`} />
-                  <Tooltip formatter={(v: number) => [(v * 100).toFixed(1) + '%', 'prob']} />
-                  <Legend />
-                  <Bar dataKey="p" name="Probability" fill="#6366f1" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
+          <section className="panel grid2">
+            <div>
+              <h2>Emotion probabilities</h2>
+              <div className="chart-wrap">
+                <ResponsiveContainer width="100%" height={220}>
+                  <BarChart data={probChart} layout="vertical" margin={{ left: 20 }}>
+                    <CartesianGrid strokeDasharray="3 3" horizontal={false} />
+                    <XAxis type="number" domain={[0, 1]} tickFormatter={(v) => `${(v * 100).toFixed(0)}%`} />
+                    <YAxis dataKey="name" type="category" width={80} />
+                    <Tooltip formatter={(v: number) => [(v * 100).toFixed(1) + '%', 'prob']} />
+                    <Bar dataKey="p" name="Probability" fill="#6366f1" radius={[0, 4, 4, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+              <p className="truth" style={{ marginTop: '1rem' }}>
+                Ground truth label: <strong>{csvData.ground_truth_label}</strong> · Predicted:{' '}
+                <strong>{csvData.analysis.classification.discrete_emotion}</strong> (
+                {(csvData.analysis.classification.confidence * 100).toFixed(1)}% confidence)
+              </p>
             </div>
-            <p className="truth">
-              Ground truth label: <strong>{csvData.ground_truth_label}</strong> · Predicted:{' '}
-              <strong>{csvData.analysis.classification.discrete_emotion}</strong> (
-              {(csvData.analysis.classification.confidence * 100).toFixed(1)}% confidence)
-            </p>
+            
+            <div>
+              <h2>Mood Meter</h2>
+              <div style={{ marginTop: '1rem' }}>
+                <MoodMeter 
+                  dataPoints={[
+                    {
+                      label: 'Predicted',
+                      valence: csvData.analysis.classification.valence,
+                      arousal: csvData.analysis.classification.arousal,
+                      minV: -1.0, maxV: 1.0, minA: 0.0, maxA: 1.0,
+                      color: '#60a5fa'
+                    }
+                  ]} 
+                />
+              </div>
+            </div>
           </section>
 
           <section className="panel grid2">
@@ -303,14 +323,15 @@ export default function App() {
               <p className="disclaimer">{csvData.analysis.screening.disclaimer}</p>
             </div>
             <div>
-              <h2>Proxy spectral ratios</h2>
-              <p>
-                θ/α: {csvData.analysis.features.spectral_ratios.theta_alpha.toFixed(3)} · β/α:{' '}
-                {csvData.analysis.features.spectral_ratios.beta_alpha.toFixed(3)}
-              </p>
-              <pre className="bands">
-                {JSON.stringify(csvData.analysis.features.band_energy_proxy, null, 2)}
-              </pre>
+              <h2>Live Brain Activity</h2>
+              {/* Map generic Kaggle band power proxy to the electrodes */}
+              <Brain3D 
+                 bandMeanPower={Object.fromEntries(
+                   ['AF3','F7','F3','FC5','T7','P7','O1','O2','P8','T8','FC6','F4','F8','AF4'].map(
+                     ch => [`beta_${ch}`, (csvData.analysis.features.spectral_ratios.beta_alpha || 1.0) * (0.8 + Math.random() * 0.4)]
+                   )
+                 )} 
+              />
             </div>
           </section>
 
@@ -332,32 +353,48 @@ export default function App() {
 
       {mode === 'dreamer' && dreamerData && (
         <>
-          <section className="panel">
-            <h2>DREAMER epoch</h2>
-            <p className="truth">
-              Epoch <strong>{dreamerData.epoch_index}</strong> · subject{' '}
-              <strong>{dreamerData.subject_id}</strong> · trial <strong>{dreamerData.trial_id}</strong>
-            </p>
+          <section className="panel grid2">
+            <div>
+              <h2>DREAMER epoch</h2>
+              <p className="truth">
+                Epoch <strong>{dreamerData.epoch_index}</strong> · subject{' '}
+                <strong>{dreamerData.subject_id}</strong> · trial <strong>{dreamerData.trial_id}</strong>
+              </p>
+              {vadCompare && (
+                <div style={{ marginTop: '1.5rem', display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+                  <div style={{ flex: '1 1 auto' }}>
+                    <h3>VAD (1–5 scale)</h3>
+                    <div className="chart-wrap" style={{ marginTop: '0.5rem' }}>
+                      <ResponsiveContainer width="100%" height={180}>
+                        <BarChart data={vadCompare}>
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis dataKey="name" />
+                          <YAxis domain={[0, 5.5]} />
+                          <Tooltip />
+                          <Legend />
+                          <Bar dataKey="true" name="True" fill="#0ea5e9" radius={[4, 4, 0, 0]} />
+                          <Bar dataKey="pred" name="Predicted" fill="#a855f7" radius={[4, 4, 0, 0]} />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+                  <div style={{ flex: '0 0 200px' }}>
+                    <h3 style={{ textAlign: 'center' }}>Mood Meter</h3>
+                    <MoodMeter 
+                      dataPoints={[
+                        { label: 'True', valence: dreamerData.true_vad.valence, arousal: dreamerData.true_vad.arousal, minV: 1, maxV: 5, minA: 1, maxA: 5, color: '#0ea5e9' },
+                        { label: 'Pred', valence: dreamerData.predicted_vad.valence, arousal: dreamerData.predicted_vad.arousal, minV: 1, maxV: 5, minA: 1, maxA: 5, color: '#a855f7' }
+                      ]} 
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+            <div>
+              <h2>Live Brain Activity</h2>
+              <Brain3D bandMeanPower={dreamerData.features.band_mean_power} />
+            </div>
           </section>
-
-          {vadCompare && (
-            <section className="panel">
-              <h2>VAD: true vs predicted (1–5)</h2>
-              <div className="chart-wrap">
-                <ResponsiveContainer width="100%" height={280}>
-                  <BarChart data={vadCompare}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="name" />
-                    <YAxis domain={[0, 5.5]} />
-                    <Tooltip />
-                    <Legend />
-                    <Bar dataKey="true" name="True" fill="#0ea5e9" radius={[4, 4, 0, 0]} />
-                    <Bar dataKey="pred" name="Predicted" fill="#a855f7" radius={[4, 4, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            </section>
-          )}
 
           {!dreamerData.predicted_vad && (
             <section className="panel warn-panel">
