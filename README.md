@@ -24,7 +24,9 @@ from emotiscan.features.eeg_epoch import extract_features_from_epoch
 
 meta = load_dreamer_manifest()
 X = open_dreamer_X_memmap()  # mmap (n, 14, 256)
-feats = extract_features_from_epoch(X[0], sfreq=meta["sfreq"])
+feats = extract_features_from_epoch(
+    X[0], sfreq=meta["sfreq"], channel_names=meta["ch_names"]
+)  # band_mean_power includes beta_AF3-style keys for 3D viz
 ```
 
 4. After export, `GET http://127.0.0.1:8000/dataset/dreamer/meta` returns the manifest JSON.
@@ -81,6 +83,8 @@ cd backend/frontend && npm run dev
 
 Open `http://localhost:5173` and pick a row index to inspect predictions and demo risk scores.
 
+The **Live Brain Activity** view loads `public/models/brain_sliced.glb` (see `BRAIN_GLB_URL` in `Brain3D.tsx`); swap that constant for a CDN URL if you prefer not to vendor the file.
+
 ## MCP server (`emotiscan-tools`)
 
 **First-time setup (venv, data, Cursor, optional SSE/ngrok):** [docs/mcp-setup-first-steps.md](docs/mcp-setup-first-steps.md).
@@ -97,6 +101,8 @@ Or: `./scripts/run_mcp_stdio.sh`. This repo includes [`.cursor/mcp.json`](.curso
 SSE for Prompt Opinion + ngrok: `./scripts/run_mcp_sse.sh` — see the first-steps doc. Env template: [`.env.example`](.env.example).
 
 **Prompt Opinion / “Agents Assemble” hackathon:** [docs/prompt-opinion-hackathon.md](docs/prompt-opinion-hackathon.md) (repos, ngrok URL, A2A via `po-adk-python`).
+
+**What’s left vs the full v2 spec:** [docs/hackathon-remaining-tasks.md](docs/hackathon-remaining-tasks.md) (updated checklist; includes your recent FHIR / 3D / MoodMeter work).
 
 ## Layout
 

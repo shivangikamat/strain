@@ -53,9 +53,14 @@ class DreamerClip:
 
 
 def load_dreamer_mat(path: Path | str) -> dict[str, Any]:
-    p = Path(path)
+    p = Path(path).expanduser().resolve()
     if not p.is_file():
-        raise FileNotFoundError(f"DREAMER.mat not found: {p}")
+        raise FileNotFoundError(
+            f"DREAMER.mat not found: {p}\n"
+            "Download from https://zenodo.org/records/546113 (DREAMER.mat), "
+            "save it (e.g. mkdir -p data/raw && mv DREAMER.mat data/raw/), "
+            "or set EMOTISCAN_DREAMER_MAT to the full path and pass --mat \"$EMOTISCAN_DREAMER_MAT\"."
+        )
     return loadmat(str(p), squeeze_me=False, struct_as_record=False)
 
 

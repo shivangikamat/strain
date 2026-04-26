@@ -29,7 +29,11 @@ def analyze_dreamer_epoch(
     idx = epoch_index % n
     eeg, side = load_dreamer_epoch_row(idx, processed_dir)
     sfreq = float(side["sfreq"])
-    feats = extract_features_from_epoch(eeg, sfreq)
+    feats = extract_features_from_epoch(
+        eeg,
+        sfreq,
+        channel_names=side["ch_names"],
+    )
     true_vad = {
         "valence": float(side["valence"]),
         "arousal": float(side["arousal"]),
