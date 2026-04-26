@@ -69,11 +69,17 @@
 .grid2 {
   display: grid;
   gap: 1.5rem;
+  min-width: 0;
+}
+
+.grid2 > * {
+  min-width: 0;
 }
 
 @media (min-width: 768px) {
+  /* minmax(0,1fr): default 1fr uses min-size auto — WebGL/canvas min-content can blow the track width */
   .grid2 {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   }
 }
 
@@ -177,6 +183,11 @@
 
 .chart-wrap {
   width: 100%;
+}
+
+.brain3d-col {
+  max-width: 100%;
+  contain: layout;
 }
 
 .recharts-text {

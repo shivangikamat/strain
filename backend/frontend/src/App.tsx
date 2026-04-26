@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Brain3D } from './components/Brain3D'
 import { MoodMeter } from './components/MoodMeter'
 import {
@@ -168,6 +168,33 @@ export default function App() {
       p: value,
     }))
 
+  const csvBrainBandPower = useMemo(() => {
+    if (!csvData) return undefined
+    const b = csvData.analysis.features.spectral_ratios.beta_alpha || 1
+    const channels = [
+      'AF3',
+      'F7',
+      'F3',
+      'FC5',
+      'T7',
+      'P7',
+      'O1',
+      'O2',
+      'P8',
+      'T8',
+      'FC6',
+      'F4',
+      'F8',
+      'AF4',
+    ] as const
+    return Object.fromEntries(
+      channels.map((ch, i) => {
+        const spread = 0.75 + (i % 5) * 0.06
+        return [`beta_${ch}`, b * spread] as const
+      }),
+    )
+  }, [csvData])
+
   const vadCompare =
     dreamerData &&
     dreamerData.predicted_vad &&
@@ -322,16 +349,9 @@ export default function App() {
               </ul>
               <p className="disclaimer">{csvData.analysis.screening.disclaimer}</p>
             </div>
-            <div>
+            <div className="brain3d-col">
               <h2>Live Brain Activity</h2>
-              {/* Map generic Kaggle band power proxy to the electrodes */}
-              <Brain3D 
-                 bandMeanPower={Object.fromEntries(
-                   ['AF3','F7','F3','FC5','T7','P7','O1','O2','P8','T8','FC6','F4','F8','AF4'].map(
-                     ch => [`beta_${ch}`, (csvData.analysis.features.spectral_ratios.beta_alpha || 1.0) * (0.8 + Math.random() * 0.4)]
-                   )
-                 )} 
-              />
+              <Brain3D bandMeanPower={csvBrainBandPower} />
             </div>
           </section>
 
@@ -360,9 +380,9 @@ export default function App() {
                 Epoch <strong>{dreamerData.epoch_index}</strong> · subject{' '}
                 <strong>{dreamerData.subject_id}</strong> · trial <strong>{dreamerData.trial_id}</strong>
               </p>
-              {vadCompare && (
+              {dreamerData.predicted_vad != null && vadCompare && (
                 <div style={{ marginTop: '1.5rem', display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-                  <div style={{ flex: '1 1 auto' }}>
+                  <div style={{ flex: '1 1 auto', minWidth: 0 }}>
                     <h3>VAD (1–5 scale)</h3>
                     <div className="chart-wrap" style={{ marginTop: '0.5rem' }}>
                       <ResponsiveContainer width="100%" height={180}>
@@ -380,17 +400,35 @@ export default function App() {
                   </div>
                   <div style={{ flex: '0 0 200px' }}>
                     <h3 style={{ textAlign: 'center' }}>Mood Meter</h3>
-                    <MoodMeter 
+                    <MoodMeter
                       dataPoints={[
-                        { label: 'True', valence: dreamerData.true_vad.valence, arousal: dreamerData.true_vad.arousal, minV: 1, maxV: 5, minA: 1, maxA: 5, color: '#0ea5e9' },
-                        { label: 'Pred', valence: dreamerData.predicted_vad.valence, arousal: dreamerData.predicted_vad.arousal, minV: 1, maxV: 5, minA: 1, maxA: 5, color: '#a855f7' }
-                      ]} 
+                        {
+                          label: 'True',
+                          valence: dreamerData.true_vad.valence,
+                          arousal: dreamerData.true_vad.arousal,
+                          minV: 1,
+                          maxV: 5,
+                          minA: 1,
+                          maxA: 5,
+                          color: '#0ea5e9',
+                        },
+                        {
+                          label: 'Pred',
+                          valence: dreamerData.predicted_vad.valence,
+                          arousal: dreamerData.predicted_vad.arousal,
+                          minV: 1,
+                          maxV: 5,
+                          minA: 1,
+                          maxA: 5,
+                          color: '#a855f7',
+                        },
+                      ]}
                     />
                   </div>
                 </div>
               )}
             </div>
-            <div>
+            <div className="brain3d-col">
               <h2>Live Brain Activity</h2>
               <Brain3D bandMeanPower={dreamerData.features.band_mean_power} />
             </div>
