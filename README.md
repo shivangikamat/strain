@@ -1,4 +1,4 @@
-# Strain / EmotiScan v2.0
+# Strain 
 
 Hackathon prototype: emotion classification and **non-clinical** demo screening from Kaggle-style tabular EEG features in [`data/emotions.csv`](data/emotions.csv) (default path; override with `EMOTISCAN_EMOTIONS_CSV`).
 
