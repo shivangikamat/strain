@@ -29,7 +29,7 @@ feats = extract_features_from_epoch(
 )  # band_mean_power includes beta_AF3-style keys for 3D viz
 ```
 
-4. After export, `GET http://127.0.0.1:8000/dataset/dreamer/meta` returns the manifest JSON.
+4. After export, `GET http://127.0.0.1:8000/api/dataset/dreamer/meta` returns the manifest JSON (same path the Vite dev UI uses).
 
 5. **Subject-holdout VAD model** (Ridge on Welch + channel-variance features):
 
@@ -68,7 +68,7 @@ python -m emotiscan.eda.kaggle_brainwave
 
 ## API + UI
 
-Terminal 1 — FastAPI (`/agent/run`, `/analyze`, `/dataset/meta`):
+Terminal 1 — FastAPI (`/api/agent/run`, `/api/analyze`, `/api/dataset/meta`, …; `/health` stays at the root):
 
 ```bash
 source .venv/bin/activate

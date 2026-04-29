@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any, Literal
 
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import APIRouter, FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
@@ -26,6 +26,8 @@ app.add_middleware(
 )
 
 _orch = Orchestrator()
+
+api = APIRouter(prefix="/api")
 
 
 class AgentRunRequest(BaseModel):
@@ -53,7 +55,7 @@ def health() -> dict[str, str]:
     return {"status": "ok"}
 
 
-@app.post("/agent/run")
+@api.post("/agent/run")
 def agent_run(body: AgentRunRequest) -> dict[str, Any]:
     try:
         return _orch.run(
@@ -66,7 +68,7 @@ def agent_run(body: AgentRunRequest) -> dict[str, Any]:
         raise HTTPException(status_code=404, detail=str(e)) from e
 
 
-@app.post("/analyze")
+@api.post("/analyze")
 def analyze(body: AnalyzeRequest) -> dict[str, Any]:
     try:
         ds = load_emotions_csv(body.csv_path)
@@ -83,7 +85,7 @@ def analyze(body: AnalyzeRequest) -> dict[str, Any]:
         raise HTTPException(status_code=404, detail=str(e)) from e
 
 
-@app.post("/analyze/dreamer")
+@api.post("/analyze/dreamer")
 def analyze_dreamer(body: AnalyzeDreamerRequest) -> dict[str, Any]:
     try:
         from emotiscan.pipelines.dreamer_analyze import analyze_dreamer_epoch
@@ -96,7 +98,7 @@ def analyze_dreamer(body: AnalyzeDreamerRequest) -> dict[str, Any]:
         raise HTTPException(status_code=404, detail=str(e)) from e
 
 
-@app.get("/dataset/meta")
+@api.get("/dataset/meta")
 def dataset_meta(csv_path: str | None = None) -> dict[str, Any]:
     try:
         return load_dataset("eeg_brainwave", csv_path=csv_path)
@@ -104,7 +106,7 @@ def dataset_meta(csv_path: str | None = None) -> dict[str, Any]:
         raise HTTPException(status_code=404, detail=str(e)) from e
 
 
-@app.get("/dataset/dreamer/meta")
+@api.get("/dataset/dreamer/meta")
 def dreamer_processed_meta(processed_dir: str | None = None) -> dict[str, Any]:
     """Metadata for exported DREAMER epoch tensors (after running export script)."""
     try:
@@ -116,13 +118,13 @@ def dreamer_processed_meta(processed_dir: str | None = None) -> dict[str, Any]:
         ) from e
 
 
-@app.post("/internal/train-baseline")
+@api.post("/internal/train-baseline")
 def train_baseline(csv_path: str | None = None) -> dict[str, Any]:
     """Train and save sklearn baseline (dev convenience)."""
     return train_and_save_baseline(csv_path)
 
 
-@app.post("/internal/train-dreamer-vad")
+@api.post("/internal/train-dreamer-vad")
 def train_dreamer_vad_endpoint(
     processed_dir: str | None = Query(default=None),
     test_size: float = Query(default=0.2, ge=0.05, le=0.5),
@@ -137,3 +139,6 @@ def train_dreamer_vad_endpoint(
         test_size=test_size,
         max_train_samples=max_train_samples,
     )
+
+
+app.include_router(api)

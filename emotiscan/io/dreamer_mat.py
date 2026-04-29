@@ -20,6 +20,36 @@ import numpy as np
 from scipy.io import loadmat
 
 
+def _dreamer_field(obj: Any, key: str) -> Any:
+    """
+    Read a field from ``loadmat(..., struct_as_record=False)`` output.
+
+    Top-level ``mat`` is a ``dict``; nested MATLAB structs are ``mat_struct`` and
+    require attribute access — ``obj[key]`` raises TypeError on recent SciPy.
+    """
+    if isinstance(obj, dict):
+        return obj[key]
+    return getattr(obj, key)
+
+
+def _unwrap_matlab_cell(cell: Any) -> Any:
+    """
+    MATLAB often stores one struct inside ``(1,1)`` or ``(1,)`` ``dtype=object`` ndarrays.
+    Follow those wrappers until we hit a ``mat_struct`` or non-wrapper array.
+    """
+    cur: Any = cell
+    while isinstance(cur, np.ndarray) and cur.dtype == object and cur.size == 1:
+        cur = cur.flat[0]
+    return cur
+
+
+def _eeg_struct(sub: Any) -> Any:
+    """Return the inner ``EEG`` ``mat_struct`` for one subject (unwraps ``(1,1)`` cells)."""
+    eeg_cell = _dreamer_field(sub, "EEG")
+    eeg = eeg_cell[0, 0] if isinstance(eeg_cell, np.ndarray) else eeg_cell
+    return _unwrap_matlab_cell(eeg)
+
+
 DREAMER_CHANNEL_NAMES: tuple[str, ...] = (
     "AF3",
     "F7",
@@ -71,26 +101,28 @@ def dreamer_root(mat: dict[str, Any]) -> Any:
 
 
 def dreamer_num_subjects(root: Any) -> int:
-    data = root["Data"]
+    data = _dreamer_field(root, "Data")
     if isinstance(data, np.ndarray) and data.ndim == 2:
         return int(max(data.shape))
     return int(data.shape[0])
 
 
 def _subject_struct(root: Any, subject_id: int) -> Any:
-    data = root["Data"]
+    data = _dreamer_field(root, "Data")
     if isinstance(data, np.ndarray) and data.ndim == 2:
         if data.shape[0] == 1:
-            return data[0, subject_id]
-        return data[subject_id, 0]
+            raw = data[0, subject_id]
+        else:
+            raw = data[subject_id, 0]
+        return _unwrap_matlab_cell(raw)
     raise TypeError("Unexpected DREAMER.Data layout.")
 
 
 def stimulus_array(root: Any, subject_id: int, trial_id: int) -> np.ndarray:
     """Return ``(n_samples, 14)`` float array for one movie trial."""
     sub = _subject_struct(root, subject_id)
-    eeg = sub["EEG"][0, 0]
-    stimuli = eeg["stimuli"][0, 0]
+    eeg = _eeg_struct(sub)
+    stimuli = _dreamer_field(eeg, "stimuli")
     raw = stimuli[trial_id, 0]
     arr = np.asarray(raw, dtype=np.float64)
     if arr.ndim != 2 or arr.shape[1] < 14:
@@ -100,9 +132,9 @@ def stimulus_array(root: Any, subject_id: int, trial_id: int) -> np.ndarray:
 
 def scores_for_trial(root: Any, subject_id: int, trial_id: int) -> tuple[float, float, float]:
     sub = _subject_struct(root, subject_id)
-    v = float(sub["ScoreValence"][0, 0][trial_id, 0])
-    a = float(sub["ScoreArousal"][0, 0][trial_id, 0])
-    d = float(sub["ScoreDominance"][0, 0][trial_id, 0])
+    v = float(np.asarray(_dreamer_field(sub, "ScoreValence")[trial_id, 0]).squeeze())
+    a = float(np.asarray(_dreamer_field(sub, "ScoreArousal")[trial_id, 0]).squeeze())
+    d = float(np.asarray(_dreamer_field(sub, "ScoreDominance")[trial_id, 0]).squeeze())
     return v, a, d
 
 
@@ -127,7 +159,8 @@ def iter_dreamer_clips(
     n_sub = dreamer_num_subjects(root)
     for subject_id in range(n_sub):
         sub = _subject_struct(root, subject_id)
-        stimuli = sub["EEG"][0, 0]["stimuli"][0, 0]
+        eeg = _eeg_struct(sub)
+        stimuli = _dreamer_field(eeg, "stimuli")
         n_trials = int(stimuli.shape[0])
         for trial_id in range(n_trials):
             sig = stimulus_array(root, subject_id, trial_id)

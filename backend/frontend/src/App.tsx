@@ -104,7 +104,7 @@ export default function App() {
   }, [])
 
   useEffect(() => {
-    void loadCsvMeta()
+    void loadCsvMeta() 
     void loadDreamerMeta()
   }, [loadCsvMeta, loadDreamerMeta])
 
@@ -438,7 +438,7 @@ export default function App() {
             <section className="panel warn-panel">
               <p>
                 VAD model not found. Train with:{' '}
-                <code>POST /internal/train-dreamer-vad</code> (after exporting DREAMER epochs).
+                <code>POST /api/internal/train-dreamer-vad</code> (after exporting DREAMER epochs).
               </p>
             </section>
           )}

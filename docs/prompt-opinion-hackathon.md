@@ -69,7 +69,7 @@ python -m mcp_server.server
 - Follow [**po-adk-python**](https://github.com/prompt-opinion/po-adk-python) README section **“Connecting to Prompt Opinion”**: deploy a **public URL**, set `HEALTHCARE_AGENT_URL` (or your agent’s URL), `PO_PLATFORM_BASE_URL`, register **`.well-known/agent-card.json`**, use **`X-API-Key`** from the workspace.
 - Prompt Opinion injects **FHIR server URL**, **bearer token**, **patient ID** into A2A metadata; tools read from session state — ideal for a **clinical wrapper** around EmotiScan.
 
-**EmotiScan:** implement an ADK agent that delegates “emotion / stress screening from EEG summary” to your **FastAPI** (`/analyze`, `/analyze/dreamer`) or in-process Python, while using PO’s FHIR tools for demographics and reporting.
+**EmotiScan:** implement an ADK agent that delegates “emotion / stress screening from EEG summary” to your **FastAPI** (`/api/analyze`, `/api/analyze/dreamer`) or in-process Python, while using PO’s FHIR tools for demographics and reporting.
 
 ## Standards stack (from `po-overview`)
 
