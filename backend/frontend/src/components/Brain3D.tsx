@@ -204,7 +204,7 @@ export function Brain3D({ bandMeanPower }: { bandMeanPower: Record<string, numbe
         width: '100%',
         maxWidth: '100%',
         minWidth: 0,
-        height: '350px',
+        height: '280px',
         boxSizing: 'border-box',
         background: 'rgba(0,0,0,0.2)',
         borderRadius: '16px',
