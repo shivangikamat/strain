@@ -350,7 +350,7 @@ export default function App() {
             <button className="nav-btn" style={{ position: 'absolute', top: '1.5rem', right: '1.5rem', padding: '0.5rem', minWidth: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center' }} title="Download Report">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
             </button>
-            <div className="grid2">
+            <div className="grid3">
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
                 <div>
                   <h2>Emotion probabilities</h2>
@@ -371,28 +371,28 @@ export default function App() {
                     </ResponsiveContainer>
                   </div>
                 </div>
+              </div>
 
-                <div>
-                  <h3>Mood Meter</h3>
-                  <div style={{ marginTop: '0.5rem', display: 'flex', justifyContent: 'center' }}>
-                    <MoodMeter 
-                      dataPoints={[
-                        {
-                          label: 'Predicted',
-                          valence: csvData.analysis.classification.valence,
-                          arousal: csvData.analysis.classification.arousal,
-                          minV: -1.0, maxV: 1.0, minA: 0.0, maxA: 1.0,
-                          color: '#a855f7'
-                        }
-                      ]} 
-                    />
-                  </div>
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                <h2>Mood Meter</h2>
+                <div style={{ flexGrow: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <MoodMeter 
+                    dataPoints={[
+                      {
+                        label: 'Predicted',
+                        valence: csvData.analysis.classification.valence,
+                        arousal: csvData.analysis.classification.arousal,
+                        minV: -1.0, maxV: 1.0, minA: 0.0, maxA: 1.0,
+                        color: '#a855f7'
+                      }
+                    ]} 
+                  />
                 </div>
               </div>
 
-              <div>
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
                 <h2>Live Brain Activity</h2>
-                <div className="brain3d-col" style={{ marginTop: '1rem' }}>
+                <div className="brain3d-col" style={{ marginTop: '1rem', flexGrow: 1 }}>
                   <Brain3D bandMeanPower={csvBrainBandPower} />
                 </div>
               </div>
@@ -406,8 +406,8 @@ export default function App() {
               <button className="nav-btn" style={{ position: 'absolute', top: '1.5rem', right: '1.5rem', padding: '0.5rem', minWidth: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center' }} title="Download Report">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
               </button>
-              <div className="grid2">
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+              <div className="grid3">
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                   <div>
                     <h2>DREAMER epoch</h2>
                     <p className="truth">
@@ -434,42 +434,47 @@ export default function App() {
                           </ResponsiveContainer>
                         </div>
                       </div>
-
-                      <div>
-                        <h3>Mood Meter</h3>
-                        <div style={{ marginTop: '0.5rem', display: 'flex', justifyContent: 'flex-start' }}>
-                          <MoodMeter
-                            dataPoints={[
-                              {
-                                label: 'True',
-                                valence: dreamerData.true_vad.valence,
-                                arousal: dreamerData.true_vad.arousal,
-                                minV: 1,
-                                maxV: 5,
-                                minA: 1,
-                                maxA: 5,
-                                color: '#0ea5e9',
-                              },
-                              {
-                                label: 'Pred',
-                                valence: dreamerData.predicted_vad.valence,
-                                arousal: dreamerData.predicted_vad.arousal,
-                                minV: 1,
-                                maxV: 5,
-                                minA: 1,
-                                maxA: 5,
-                                color: '#a855f7',
-                              },
-                            ]}
-                          />
-                        </div>
-                      </div>
                     </>
                   )}
                 </div>
-                <div>
+
+                {dreamerData.predicted_vad != null && vadCompare ? (
+                  <div style={{ display: 'flex', flexDirection: 'column' }}>
+                    <h2>Mood Meter</h2>
+                    <div style={{ flexGrow: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <MoodMeter
+                        dataPoints={[
+                          {
+                            label: 'True',
+                            valence: dreamerData.true_vad.valence,
+                            arousal: dreamerData.true_vad.arousal,
+                            minV: 1,
+                            maxV: 5,
+                            minA: 1,
+                            maxA: 5,
+                            color: '#0ea5e9',
+                          },
+                          {
+                            label: 'Pred',
+                            valence: dreamerData.predicted_vad.valence,
+                            arousal: dreamerData.predicted_vad.arousal,
+                            minV: 1,
+                            maxV: 5,
+                            minA: 1,
+                            maxA: 5,
+                            color: '#a855f7',
+                          },
+                        ]}
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  <div />
+                )}
+
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
                   <h2>Live Brain Activity</h2>
-                  <div className="brain3d-col" style={{ marginTop: '1rem', background: 'rgba(0,0,0,0.2)', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                  <div className="brain3d-col" style={{ marginTop: '1rem', background: 'rgba(0,0,0,0.2)', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.05)', flexGrow: 1 }}>
                     <Brain3D bandMeanPower={dreamerData.features.band_mean_power} />
                   </div>
                 </div>

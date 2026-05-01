@@ -292,7 +292,7 @@
   border-color: rgba(255, 255, 255, 0.15);
 }
 
-.grid2 {
+.grid2, .grid3 {
   display: grid;
   gap: 1.5rem;
   min-width: 0;
@@ -300,6 +300,10 @@
 
 @media (min-width: 800px) {
   .grid2 { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+}
+
+@media (min-width: 1000px) {
+  .grid3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 
 /* The White Section at the bottom */
