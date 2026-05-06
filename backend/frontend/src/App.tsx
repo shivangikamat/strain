@@ -217,11 +217,11 @@ export default function App() {
     ]
 
   return (
-    <div className="emotiscan">
+    <div className="strain">
       {/* Navigation */}
       <nav className="top-nav">
         <div className="nav-logo">
-          <div className="nav-logo-icon">●</div> EMOTISCAN
+          <div className="nav-logo-icon">●</div> STRAIN
         </div>
         <div className="nav-links">
           <a href="#">COURSES</a>

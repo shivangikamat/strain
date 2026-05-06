@@ -27,8 +27,8 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from emotiscan.config import DREAMER_PROCESSED_DIR  # noqa: E402
-from emotiscan.io.dreamer_mat import (  # noqa: E402
+from strain.config import DREAMER_PROCESSED_DIR  # noqa: E402
+from strain.io.dreamer_mat import (  # noqa: E402
     DREAMER_CHANNEL_NAMES,
     count_dreamer_clips,
     iter_dreamer_clips,
@@ -48,7 +48,7 @@ def main() -> None:
 
     mat_path = args.mat
     if mat_path is None:
-        from emotiscan.config import DREAMER_MAT
+        from strain.config import DREAMER_MAT
 
         mat_path = DREAMER_MAT
 

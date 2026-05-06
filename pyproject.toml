@@ -3,9 +3,9 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "emotiscan"
+name = "strain"
 version = "0.1.0"
-description = "EmotiScan v2.0 — EEG emotion / mental-health demo (Kaggle emotions.csv)"
+description = "STRAIN v2.0 — EEG emotion / mental-health demo (Kaggle emotions.csv)"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
@@ -28,4 +28,4 @@ dependencies = [
 dev = ["jupyter>=1.0", "ipykernel>=6.29", "kaggle>=1.6"]
 
 [tool.hatch.build.targets.wheel]
-packages = ["emotiscan"]
+packages = ["strain"]

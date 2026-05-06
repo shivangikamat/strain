@@ -18,7 +18,7 @@ else
 fi
 
 if [[ -f data/emotions.csv ]]; then
-  echo "Found data/emotions.csv (EmotiScan default — set EMOTISCAN_EMOTIONS_CSV to override)."
+  echo "Found data/emotions.csv (STRAIN default — set STRAIN_EMOTIONS_CSV to override)."
   python3 -c "import pandas as pd; df=pd.read_csv('data/emotions.csv', nrows=0); print('columns', len(df.columns))"
 else
   echo "No data/emotions.csv yet — add the Kaggle export as data/emotions.csv"

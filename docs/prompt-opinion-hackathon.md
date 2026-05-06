@@ -24,7 +24,7 @@ The brief’s **“po-sdk”** maps to the **Google ADK sample agents**, not a r
 | [**po-adk-python**](https://github.com/prompt-opinion/po-adk-python) | **Python A2A agents** (Google ADK): `healthcare_agent`, `general_agent`, `orchestrator`; **A2A v1** agent cards; **FHIR context** in metadata; **deploy + register** with Prompt Opinion. |
 | [**po-adk-typescript**](https://github.com/prompt-opinion/po-adk-typescript) | Same idea in TypeScript. |
 
-**EmotiScan’s `mcp_server`** is a separate **Python FastMCP** tool server (EEG / emotion / DREAMER). It complements (does not replace) `po-community-mcp` for FHIR-heavy tools. Long term you can:
+**STRAIN’s `mcp_server`** is a separate **Python FastMCP** tool server (EEG / emotion / DREAMER). It complements (does not replace) `po-community-mcp` for FHIR-heavy tools. Long term you can:
 
 - **Reuse patterns** from `po-community-mcp` / SHARP-on-MCP for FHIR exports, or  
 - **Call** this repo’s FastAPI from a **po-adk-python**-style agent as custom tools.
@@ -38,9 +38,9 @@ The brief’s **“po-sdk”** maps to the **Google ADK sample agents**, not a r
 - Enable **A2A** and **FHIR context** in workspace settings per brief.
 - Use Launchpad to chat and validate patient-aware behavior.
 
-**EmotiScan:** use for narrative + demo data; wire **FHIR `DiagnosticReport` / `Observation`** export (planned in product spec) to match this path.
+**STRAIN:** use for narrative + demo data; wire **FHIR `DiagnosticReport` / `Observation`** export (planned in product spec) to match this path.
 
-### Option 2 — **Custom MCP server** (best fit for EmotiScan tools today)
+### Option 2 — **Custom MCP server** (best fit for STRAIN tools today)
 
 Prompt Opinion expects a **reachable MCP endpoint** (the brief mentions **ngrok**).
 
@@ -50,11 +50,11 @@ Prompt Opinion expects a **reachable MCP endpoint** (the brief mentions **ngrok*
 ```bash
 cd /path/to/strain
 source .venv/bin/activate
-export EMOTISCAN_MCP_TRANSPORT=sse
+export STRAIN_MCP_TRANSPORT=sse
 export FASTMCP_HOST=0.0.0.0
 export FASTMCP_PORT=8765
 # Allow tunneled Host headers (ngrok / Cloud Run preview):
-export EMOTISCAN_MCP_RELAX_DNS=1
+export STRAIN_MCP_RELAX_DNS=1
 python -m mcp_server.server
 ```
 
@@ -67,13 +67,13 @@ python -m mcp_server.server
 ### Option 3 — **Custom A2A agent** (advanced)
 
 - Follow [**po-adk-python**](https://github.com/prompt-opinion/po-adk-python) README section **“Connecting to Prompt Opinion”**: deploy a **public URL**, set `HEALTHCARE_AGENT_URL` (or your agent’s URL), `PO_PLATFORM_BASE_URL`, register **`.well-known/agent-card.json`**, use **`X-API-Key`** from the workspace.
-- Prompt Opinion injects **FHIR server URL**, **bearer token**, **patient ID** into A2A metadata; tools read from session state — ideal for a **clinical wrapper** around EmotiScan.
+- Prompt Opinion injects **FHIR server URL**, **bearer token**, **patient ID** into A2A metadata; tools read from session state — ideal for a **clinical wrapper** around STRAIN.
 
-**EmotiScan:** implement an ADK agent that delegates “emotion / stress screening from EEG summary” to your **FastAPI** (`/api/analyze`, `/api/analyze/dreamer`) or in-process Python, while using PO’s FHIR tools for demographics and reporting.
+**STRAIN:** implement an ADK agent that delegates “emotion / stress screening from EEG summary” to your **FastAPI** (`/api/analyze`, `/api/analyze/dreamer`) or in-process Python, while using PO’s FHIR tools for demographics and reporting.
 
 ## Standards stack (from `po-overview`)
 
-- **MCP** — tool discovery and invocation (this repo’s `emotiscan-tools` server).  
+- **MCP** — tool discovery and invocation (this repo’s `strain-tools` server).  
 - **A2A** — multi-agent coordination (`po-adk-python` / `a2aproject/a2a-python`).  
 - **FHIR** — patient context and interoperable outputs ([community MCP](https://github.com/prompt-opinion/po-community-mcp), SHARP-on-MCP).
 
@@ -82,7 +82,7 @@ python -m mcp_server.server
 1. **MCP on SSE + ngrok** → register in Prompt Opinion → demonstrate tools in Launchpad.  
 2. **Synthetic FHIR patient** in workspace + align copy with “not a medical device”.  
 3. **`export_fhir`-style bundle** from screening results (extend API/MCP).  
-4. Optional: **fork `po-adk-python`** and add a thin **EmotiScan specialist** agent with A2A v1 card.
+4. Optional: **fork `po-adk-python`** and add a thin **STRAIN specialist** agent with A2A v1 card.
 
 ## Community
 

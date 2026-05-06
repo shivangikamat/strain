@@ -1,6 +1,6 @@
-# EmotiScan hackathon plan — remaining tasks
+# STRAIN hackathon plan — remaining tasks
 
-This list is **updated for the current codebase** (as of the latest changes). It compares the repo to the original v2 spec in [`.cursor/hackathon_idea_EMOTISCAN_v2.md`](../.cursor/hackathon_idea_EMOTISCAN_v2.md).
+This list is **updated for the current codebase** (as of the latest changes). It compares the repo to the original v2 spec in [`.cursor/hackathon_idea_EMOTISCAN_v2.md`](../.cursor/hackathon_idea_EMOTISCAN_v2.md) (historical doc name).
 
 ---
 
@@ -8,13 +8,13 @@ This list is **updated for the current codebase** (as of the latest changes). It
 
 | Area | What landed |
 |------|----------------|
-| **FHIR (demo)** | [`emotiscan/io/fhir.py`](../emotiscan/io/fhir.py) — `generate_fhir_bundle()` (Collection bundle: `DiagnosticReport`, `RiskAssessment` ×2, `Observation`). |
+| **FHIR (demo)** | [`strain/io/fhir.py`](../strain/io/fhir.py) — `generate_fhir_bundle()` (Collection bundle: `DiagnosticReport`, `RiskAssessment` ×2, `Observation`). |
 | **MCP** | [`export_fhir_tool`](../mcp_server/server.py) — CSV row → screening → FHIR JSON string. |
 | **MCP transport** | CLI `--sse` / `--port` for local SSE in addition to env-based transport. |
 | **3D UI** | [`Brain3D.tsx`](../backend/frontend/src/components/Brain3D.tsx) — R3F + Drei, DREAMER-style electrode layout, pulsing markers. |
 | **Valence–arousal UI** | [`MoodMeter.tsx`](../backend/frontend/src/components/MoodMeter.tsx) — quadrant plot wired in [`App.tsx`](../backend/frontend/src/App.tsx). |
 | **Frontend deps** | `three`, `@react-three/fiber`, `@react-three/drei` in [`package.json`](../backend/frontend/package.json). |
-| **Brain3D API contract** | DREAMER `/analyze/dreamer` now includes per-electrode Welch means in `features.band_mean_power` (`beta_AF3`, …) via [`band_powers_welch`](../emotiscan/features/eeg_epoch.py) + [`dreamer_analyze`](../emotiscan/pipelines/dreamer_analyze.py) (`channel_names` from manifest). |
+| **Brain3D API contract** | DREAMER `/analyze/dreamer` now includes per-electrode Welch means in `features.band_mean_power` (`beta_AF3`, …) via [`band_powers_welch`](../strain/features/eeg_epoch.py) + [`dreamer_analyze`](../strain/pipelines/dreamer_analyze.py) (`channel_names` from manifest). |
 
 ---
 
@@ -67,7 +67,7 @@ This list is **updated for the current codebase** (as of the latest changes). It
 
 ## A2A & platform (plan §3.3, Phase 7 + Prompt Opinion)
 
-- [ ] **Fork / adapt [`po-adk-python`](https://github.com/prompt-opinion/po-adk-python)** — One A2A v1 agent exposing EmotiScan analysis + FHIR export; register with Prompt Opinion (`agent-card`, `X-API-Key`, `PO_PLATFORM_BASE_URL`).
+- [ ] **Fork / adapt [`po-adk-python`](https://github.com/prompt-opinion/po-adk-python)** — One A2A v1 agent exposing STRAIN analysis + FHIR export; register with Prompt Opinion (`agent-card`, `X-API-Key`, `PO_PLATFORM_BASE_URL`).
 - [ ] **Five logical agents** — Either separate deployments or one orchestrator with distinct **agent cards** / skills (Data Curator, Analysis, Explainer, Synthetic, Visualization / Care Navigator).
 
 ---

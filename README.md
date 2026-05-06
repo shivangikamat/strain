@@ -1,6 +1,6 @@
-# Strain 
+# STRAIN
 
-Hackathon prototype: emotion classification and **non-clinical** demo screening from Kaggle-style tabular EEG features in [`data/emotions.csv`](data/emotions.csv) (default path; override with `EMOTISCAN_EMOTIONS_CSV`).
+Hackathon prototype: emotion classification and **non-clinical** demo screening from Kaggle-style tabular EEG features in [`data/emotions.csv`](data/emotions.csv) (default path; override with `STRAIN_EMOTIONS_CSV`).
 
 ## DREAMER — real multi-channel EEG epoch tensors (recommended next step)
 
@@ -8,7 +8,7 @@ Hackathon prototype: emotion classification and **non-clinical** demo screening 
 
 **Optimal epoch strategy for this repo:** sliding windows **256 samples (~2 s) with 50% overlap (128)** → fixed-shape tensors `(14, 256)` ideal for PyTorch `Dataset` / future 4D-CRNN-style models, plus more training rows per subject than “one vector per trial”. Labels are copied from the parent trial (standard for clip-level learning on DREAMER). Optional **1–45 Hz** bandpass via MNE during export.
 
-1. Download `DREAMER.mat` into `data/raw/DREAMER.mat` (or set `EMOTISCAN_DREAMER_MAT`).
+1. Download `DREAMER.mat` into `data/raw/DREAMER.mat` (or set `STRAIN_DREAMER_MAT`).
 2. Export memmapped tensors + `manifest.json`:
 
 ```bash
@@ -19,8 +19,8 @@ python scripts/export_dreamer_epochs.py --mat data/raw/DREAMER.mat
 3. Read from Python:
 
 ```python
-from emotiscan.data.dreamer_epochs import load_dreamer_manifest, open_dreamer_X_memmap
-from emotiscan.features.eeg_epoch import extract_features_from_epoch
+from strain.data.dreamer_epochs import load_dreamer_manifest, open_dreamer_X_memmap
+from strain.features.eeg_epoch import extract_features_from_epoch
 
 meta = load_dreamer_manifest()
 X = open_dreamer_X_memmap()  # mmap (n, 14, 256)
@@ -38,9 +38,9 @@ python scripts/train_dreamer_vad.py
 # optional smoke: --max-train-samples 4000
 ```
 
-This writes `emotiscan/models/dreamer_vad_multiridge.joblib`. Then `POST /api/analyze/dreamer` and the UI “DREAMER epochs” tab return predictions + explanations.
+This writes `strain/models/dreamer_vad_multiridge.joblib`. Then `POST /api/analyze/dreamer` and the UI “DREAMER epochs” tab return predictions + explanations.
 
-6. **PyTorch `Dataset`**: `from emotiscan.data import DreamerEpochDataset` — optional `indices` from `train_test_mask_by_subject()` for subject-safe splits.
+6. **PyTorch `Dataset`**: `from strain.data import DreamerEpochDataset` — optional `indices` from `train_test_mask_by_subject()` for subject-safe splits.
 
 7. **Agent / API routing**: `POST /api/agent/run` with body `{"query": "epoch=42", "source": "dreamer"}` runs the DREAMER pipeline (optional `dreamer_processed_dir`).
 
@@ -54,7 +54,7 @@ source .venv/bin/activate
 pip install -e .
 ```
 
-Train the baseline classifier (writes `emotiscan/models/baseline_pipeline.joblib`):
+Train the baseline classifier (writes `strain/models/baseline_pipeline.joblib`):
 
 ```bash
 python scripts/train_baseline.py
@@ -63,7 +63,7 @@ python scripts/train_baseline.py
 EDA script:
 
 ```bash
-python -m emotiscan.eda.kaggle_brainwave
+python -m strain.eda.kaggle_brainwave
 ```
 
 ## API + UI
@@ -85,7 +85,7 @@ Open `http://localhost:5173` and pick a row index to inspect predictions and dem
 
 The **Live Brain Activity** view loads `public/models/brain_sliced.glb` (see `BRAIN_GLB_URL` in `Brain3D.tsx`); swap that constant for a CDN URL if you prefer not to vendor the file.
 
-## MCP server (`emotiscan-tools`)
+## MCP server (`strain-tools`)
 
 **First-time setup (venv, data, Cursor, optional SSE/ngrok):** [docs/mcp-setup-first-steps.md](docs/mcp-setup-first-steps.md).
 
@@ -96,7 +96,7 @@ source .venv/bin/activate
 python -m mcp_server.server
 ```
 
-Or: `./scripts/run_mcp_stdio.sh`. This repo includes [`.cursor/mcp.json`](.cursor/mcp.json) so Cursor can load **emotiscan-tools** when you open the folder (uses `.venv/bin/python`; create the venv first or edit the path).
+Or: `./scripts/run_mcp_stdio.sh`. This repo includes [`.cursor/mcp.json`](.cursor/mcp.json) so Cursor can load **strain-tools** when you open the folder (uses `.venv/bin/python`; create the venv first or edit the path).
 
 SSE for Prompt Opinion + ngrok: `./scripts/run_mcp_sse.sh` — see the first-steps doc. Env template: [`.env.example`](.env.example).
 
@@ -106,13 +106,13 @@ SSE for Prompt Opinion + ngrok: `./scripts/run_mcp_sse.sh` — see the first-ste
 
 ## Layout
 
-- `emotiscan/` — loaders, features, sklearn model, screening stub, in-process agents
-- `emotiscan/io/dreamer_mat.py` — DREAMER.mat reader + sliding-window clip iterator
-- `emotiscan/data/dreamer_epochs.py` — mmap manifest helpers
+- `strain/` — loaders, features, sklearn model, screening stub, in-process agents
+- `strain/io/dreamer_mat.py` — DREAMER.mat reader + sliding-window clip iterator
+- `strain/data/dreamer_epochs.py` — mmap manifest helpers
 - `scripts/export_dreamer_epochs.py` — MAT → `data/processed/dreamer/` tensors
 - `api/` — FastAPI orchestrator
 - `mcp_server/` — MCP tools (stdio default; SSE for remote)
-- `.cursor/mcp.json` — Cursor project MCP entry for **emotiscan-tools**
+- `.cursor/mcp.json` — Cursor project MCP entry for **strain-tools**
 - `docs/mcp-setup-first-steps.md` — MCP setup checklist
 - `scripts/` — Kaggle download helper, training CLI
 - `notebooks/01_kaggle_eeg_eda.ipynb` — exploratory notebook

@@ -1,4 +1,4 @@
-"""FastAPI orchestrator for EmotiScan."""
+"""FastAPI orchestrator for STRAIN."""
 
 from __future__ import annotations
 
@@ -8,14 +8,14 @@ from fastapi import APIRouter, FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
-from emotiscan.agents.analysis_engine import AnalysisEngine
-from emotiscan.agents.orchestrator import Orchestrator
-from emotiscan.io.catalog import load_dataset_meta
-from emotiscan.io.emotions_csv import load_dataset, load_emotions_csv
-from emotiscan.models.classifier import train_and_save_baseline
-from emotiscan.models.dreamer_vad import train_and_save_dreamer_vad
+from strain.agents.analysis_engine import AnalysisEngine
+from strain.agents.orchestrator import Orchestrator
+from strain.io.catalog import load_dataset_meta
+from strain.io.emotions_csv import load_dataset, load_emotions_csv
+from strain.models.classifier import train_and_save_baseline
+from strain.models.dreamer_vad import train_and_save_dreamer_vad
 
-app = FastAPI(title="EmotiScan API", version="0.1.0")
+app = FastAPI(title="STRAIN API", version="0.1.0")
 
 app.add_middleware(
     CORSMiddleware,
@@ -88,7 +88,7 @@ def analyze(body: AnalyzeRequest) -> dict[str, Any]:
 @api.post("/analyze/dreamer")
 def analyze_dreamer(body: AnalyzeDreamerRequest) -> dict[str, Any]:
     try:
-        from emotiscan.pipelines.dreamer_analyze import analyze_dreamer_epoch
+        from strain.pipelines.dreamer_analyze import analyze_dreamer_epoch
 
         return analyze_dreamer_epoch(
             body.epoch_index,

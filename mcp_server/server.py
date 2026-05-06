@@ -1,10 +1,10 @@
 """
-EmotiScan MCP server — ``emotiscan-tools`` for Cursor, Prompt Opinion, or other MCP clients.
+STRAIN MCP server — ``strain-tools`` for Cursor, Prompt Opinion, or other MCP clients.
 
-**Stdio (local):** ``python -m mcp_server.server`` or ``EMOTISCAN_MCP_TRANSPORT=stdio``
+**Stdio (local):** ``python -m mcp_server.server`` or ``STRAIN_MCP_TRANSPORT=stdio``
 
 **SSE (URL for Prompt Opinion + ngrok):**
-``EMOTISCAN_MCP_TRANSPORT=sse FASTMCP_HOST=0.0.0.0 FASTMCP_PORT=8765 EMOTISCAN_MCP_RELAX_DNS=1 python -m mcp_server.server``
+``STRAIN_MCP_TRANSPORT=sse FASTMCP_HOST=0.0.0.0 FASTMCP_PORT=8765 STRAIN_MCP_RELAX_DNS=1 python -m mcp_server.server``
 
 Then tunnel ``8765`` and register ``https://<subdomain>.ngrok-free.app/sse`` (or your host + ``FASTMCP_SSE_PATH``) in the workspace.
 See ``docs/prompt-opinion-hackathon.md``.
@@ -20,29 +20,29 @@ from typing import Any
 from mcp.server.fastmcp import FastMCP
 from mcp.server.transport_security import TransportSecuritySettings
 
-from emotiscan.features.extract import extract_features
-from emotiscan.io.catalog import load_dataset_meta
-from emotiscan.io.emotions_csv import load_emotions_csv
-from emotiscan.models.classifier import (
+from strain.features.extract import extract_features
+from strain.io.catalog import load_dataset_meta
+from strain.io.emotions_csv import load_emotions_csv
+from strain.models.classifier import (
     classify_emotion,
     explain_decision,
     load_classifier_pipeline,
 )
-from emotiscan.io.fhir import generate_fhir_bundle
-from emotiscan.pipelines.dreamer_analyze import analyze_dreamer_epoch
-from emotiscan.screening.mental_health import screen_mental_health
+from strain.io.fhir import generate_fhir_bundle
+from strain.pipelines.dreamer_analyze import analyze_dreamer_epoch
+from strain.screening.mental_health import screen_mental_health
 
 _MCP_INSTRUCTIONS = (
-    "EmotiScan v2.0 — healthcare hackathon prototype tools for EEG-derived emotion screening "
+    "STRAIN v2.0 — healthcare hackathon prototype tools for EEG-derived emotion screening "
     "(tabular Kaggle features) and DREAMER multi-channel epochs (VAD regression). "
     "Outputs are for research and demonstration only — not a medical device. "
     "Tools: load_dataset, CSV feature extraction/classification, DREAMER epoch features and VAD prediction."
 )
 
-_mcp_relax_dns = os.environ.get("EMOTISCAN_MCP_RELAX_DNS", "").lower() in ("1", "true", "yes")
+_mcp_relax_dns = os.environ.get("STRAIN_MCP_RELAX_DNS", "").lower() in ("1", "true", "yes")
 
 mcp = FastMCP(
-    "emotiscan-tools",
+    "strain-tools",
     instructions=_MCP_INSTRUCTIONS,
     transport_security=TransportSecuritySettings(
         enable_dns_rebinding_protection=not _mcp_relax_dns,
@@ -163,7 +163,7 @@ def export_fhir_tool(csv_path: str | None = None, row_index: int = 0, patient_id
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="EmotiScan MCP Server")
+    parser = argparse.ArgumentParser(description="STRAIN MCP Server")
     parser.add_argument(
         "--sse",
         action="store_true",
@@ -179,16 +179,16 @@ def main() -> None:
 
     if args.sse:
         print(
-            "Starting EmotiScan FastMCP Server in SSE mode "
+            "Starting STRAIN FastMCP Server in SSE mode "
             f"(127.0.0.1:{args.port})…"
         )
         mcp.run(transport="sse", host="127.0.0.1", port=args.port)
         return
 
-    transport = os.environ.get("EMOTISCAN_MCP_TRANSPORT", "stdio")
+    transport = os.environ.get("STRAIN_MCP_TRANSPORT", "stdio")
     if transport not in ("stdio", "sse", "streamable-http"):
         raise SystemExit(
-            f"Invalid EMOTISCAN_MCP_TRANSPORT={transport!r}. "
+            f"Invalid STRAIN_MCP_TRANSPORT={transport!r}. "
             "Use stdio, sse, or streamable-http."
         )
     mcp.run(transport=transport)  # type: ignore[arg-type]

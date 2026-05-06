@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Train LogisticRegression baseline and save to emotiscan/models/baseline_pipeline.joblib."""
+"""Train LogisticRegression baseline and save to strain/models/baseline_pipeline.joblib."""
 
 from __future__ import annotations
 
@@ -11,7 +11,7 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from emotiscan.models.classifier import train_and_save_baseline  # noqa: E402
+from strain.models.classifier import train_and_save_baseline  # noqa: E402
 
 
 def main() -> None:
