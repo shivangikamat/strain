@@ -50,6 +50,14 @@ class AnalyzeDreamerRequest(BaseModel):
     processed_dir: str | None = None
 
 
+class ExportFhirRequest(BaseModel):
+    source: Literal["csv", "dreamer"] = "csv"
+    index: int = 0
+    patient_id: str = "demo-alex"
+    csv_path: str | None = None
+    dreamer_processed_dir: str | None = None
+
+
 @app.get("/health")
 def health() -> dict[str, str]:
     return {"status": "ok"}
@@ -94,6 +102,33 @@ def analyze_dreamer(body: AnalyzeDreamerRequest) -> dict[str, Any]:
             body.epoch_index,
             processed_dir=body.processed_dir,
         )
+    except FileNotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e)) from e
+
+
+@api.post("/export/fhir")
+def export_fhir(body: ExportFhirRequest) -> dict[str, Any]:
+    from strain.io.fhir import generate_fhir_bundle
+    try:
+        if body.source == "dreamer":
+            from strain.pipelines.dreamer_analyze import analyze_dreamer_epoch
+            out = analyze_dreamer_epoch(body.index, processed_dir=body.dreamer_processed_dir)
+            screening = out.get("screening")
+            if not screening:
+                raise HTTPException(status_code=400, detail="No screening result (VAD model not trained?)")
+            return generate_fhir_bundle(screening, patient_id=body.patient_id)
+        else:
+            from strain.features.extract import extract_features
+            from strain.models.classifier import classify_emotion, load_classifier_pipeline
+            from strain.screening.mental_health import screen_mental_health
+            ds = load_emotions_csv(body.csv_path)
+            idx = body.index % ds.X.shape[0]
+            row = ds.X[idx]
+            bundle = load_classifier_pipeline()
+            feats = extract_features(row, ds.feature_names)
+            cls = classify_emotion(row, feature_names=ds.feature_names, bundle=bundle)
+            screening = screen_mental_health(cls, feats)
+            return generate_fhir_bundle(screening, patient_id=body.patient_id)
     except FileNotFoundError as e:
         raise HTTPException(status_code=404, detail=str(e)) from e
 
