@@ -1,100 +1,136 @@
 # STRAIN hackathon plan — remaining tasks
 
-This list is **updated for the current codebase** (as of the latest changes). It compares the repo to the original v2 spec in [`.cursor/hackathon_idea_EMOTISCAN_v2.md`](../.cursor/hackathon_idea_EMOTISCAN_v2.md) (historical doc name).
+This list tracks **STRAIN** vs the original product spec in [`.cursor/hackathon_idea_EMOTISCAN_v2.md`](../.cursor/hackathon_idea_EMOTISCAN_v2.md) (historical filename) and vs **Prompt Opinion “Agents Assemble”** expectations.
+
+**Official Prompt Opinion docs (use these for registration & wiring):**
+
+| Topic | Doc |
+|-------|-----|
+| Account, Gemini key, patient, agent, conversation | [Getting Started](https://docs.promptopinion.ai/getting-started) |
+| LLM configs (`Configuration → Models`) | [Model Configuration](https://docs.promptopinion.ai/model-configuration) |
+| A2A **v1** agent card (`supportedInterfaces`, removed `url`) | [A2A V1 Migration](https://docs.promptopinion.ai/a2a-v1-migration) |
+| Workspace / Patient / Group scopes | [Agent Scopes](https://docs.promptopinion.ai/agents/agent-scopes) |
+| **BYO agents** — system prompt, **Tools (MCP)**, A2A, FHIR extension | [BYO Agents](https://docs.promptopinion.ai/agents/byo-agents) |
+| Register external A2A agents (`/.well-known/agent-card.json`) | [External Agents](https://docs.promptopinion.ai/agents/external-agents) |
+| FHIR URL / token / patient id passed to tools | [FHIR Context Overview](https://docs.promptopinion.ai/fhir-context/overview) |
+| **MCP + FHIR** — extension `ai.promptopinion/fhir-context`, headers | [FHIR Context With MCP](https://docs.promptopinion.ai/fhir-context/mcp-fhir-context) |
+| **A2A + FHIR** — extension URI + message metadata | [FHIR Context With A2A](https://docs.promptopinion.ai/fhir-context/a2a-fhir-context) |
+
+Repo-specific guides: [prompt-opinion-hackathon.md](./prompt-opinion-hackathon.md) · [mcp-setup-first-steps.md](./mcp-setup-first-steps.md).
 
 ---
 
-## Recently implemented (adjust priorities accordingly)
+## Prompt Opinion — include STRAIN MCP in your hackathon app
+
+“Your app” on Po means a **BYO agent** in the workspace that uses **this repo’s MCP server** under **Agents → BYO Agents → Tools** (per [BYO Agents](https://docs.promptopinion.ai/agents/byo-agents)).
+
+### One-time Po setup
+
+1. **LLM** — Create a key (e.g. Google AI Studio) and add a **model configuration** under **`Configuration → Models`** ([Model Configuration](https://docs.promptopinion.ai/model-configuration)).
+2. **Account & workspace** — Register and complete [Getting Started](https://docs.promptopinion.ai/getting-started) (patient, enable an agent, conversation).
+3. **Scopes** — Decide **Workspace** vs **Patient** vs **Group** for your demo ([Agent Scopes](https://docs.promptopinion.ai/agents/agent-scopes)).
+
+### Register STRAIN as an MCP server (SSE + public URL)
+
+1. On your machine: follow [mcp-setup-first-steps.md](./mcp-setup-first-steps.md) — `pip install -e .`, data + models, then run **SSE** (e.g. `./scripts/run_mcp_sse.sh` with `STRAIN_MCP_RELAX_DNS=1`).
+2. Expose the port with **ngrok** (or similar): e.g. `ngrok http 8765`.
+3. In Po: **`Configuration → MCP Servers`** → add server → enter base URL; Po sends **`initialize`** ([FHIR Context With MCP](https://docs.promptopinion.ai/fhir-context/mcp-fhir-context)). Use the HTTPS URL + Po/FastMCP **SSE path** (often **`/sse`** — confirm in server logs / FastMCP docs).
+4. If Po shows FHIR-context options, grant scopes you need after reviewing trust ([mcp-fhir-context](https://docs.promptopinion.ai/fhir-context/mcp-fhir-context)).
+
+### Attach MCP to a BYO agent
+
+1. **`Agents → BYO Agents`** → **Add AI Agent** ([BYO Agents](https://docs.promptopinion.ai/agents/byo-agents)).
+2. Pick your **model configuration**.
+3. Open the **Tools** tab and **select the MCP server** you registered (STRAIN / `strain-tools`).
+4. Optional: enable **A2A & Skills**, Po **FHIR context extension** for agents that should receive FHIR URL/token/patient from Po.
+5. Use **Launchpad** to run conversations with that agent.
+
+### External A2A agent (advanced)
+
+- Deploy an agent that exposes **`/.well-known/agent-card.json`** per **A2A v1** ([External Agents](https://docs.promptopinion.ai/agents/external-agents), [A2A V1 Migration](https://docs.promptopinion.ai/a2a-v1-migration)).
+- In Po: **`Agents → External Agents`** → **Add Connection** with the agent-card URL.
+- **Consultation:** start from a **BYO** chat, then **Consult with another agent** → pick the external agent ([External Agents](https://docs.promptopinion.ai/agents/external-agents)).
+
+### Code gaps for full Po FHIR ↔ MCP integration
+
+- [ ] **`ai.promptopinion/fhir-context`** — Declare this extension in MCP **`initialize` → `capabilities.extensions`** and read **`X-FHIR-Server-URL`**, **`X-FHIR-Access-Token`**, **`X-Patient-ID`** (and optional refresh headers) in tool handlers when Po sends them ([mcp-fhir-context](https://docs.promptopinion.ai/fhir-context/mcp-fhir-context)). *Not implemented in `mcp_server/server.py` today.*
+- [ ] **Tool logic** — Optionally POST screening bundles to the workspace FHIR server using those headers (demo only; align disclaimers).
+
+---
+
+## Recently implemented (repo)
 
 | Area | What landed |
 |------|----------------|
-| **FHIR (demo)** | [`strain/io/fhir.py`](../strain/io/fhir.py) — `generate_fhir_bundle()` (Collection bundle: `DiagnosticReport`, `RiskAssessment` ×2, `Observation`). |
-| **MCP** | [`export_fhir_tool`](../mcp_server/server.py) — CSV row → screening → FHIR JSON string. |
-| **MCP transport** | CLI `--sse` / `--port` for local SSE in addition to env-based transport. |
-| **3D UI** | [`Brain3D.tsx`](../backend/frontend/src/components/Brain3D.tsx) — R3F + Drei, DREAMER-style electrode layout, pulsing markers. |
-| **Valence–arousal UI** | [`MoodMeter.tsx`](../backend/frontend/src/components/MoodMeter.tsx) — quadrant plot wired in [`App.tsx`](../backend/frontend/src/App.tsx). |
-| **Frontend deps** | `three`, `@react-three/fiber`, `@react-three/drei` in [`package.json`](../backend/frontend/package.json). |
-| **Brain3D API contract** | DREAMER `/analyze/dreamer` now includes per-electrode Welch means in `features.band_mean_power` (`beta_AF3`, …) via [`band_powers_welch`](../strain/features/eeg_epoch.py) + [`dreamer_analyze`](../strain/pipelines/dreamer_analyze.py) (`channel_names` from manifest). |
+| **FHIR (demo)** | [`strain/io/fhir.py`](../strain/io/fhir.py) — `generate_fhir_bundle()`. |
+| **MCP** | [`export_fhir_tool`](../mcp_server/server.py) — CSV → screening → FHIR JSON string. |
+| **MCP transport** | Stdio + SSE CLI (`STRAIN_MCP_TRANSPORT`, etc.). |
+| **3D UI** | [`Brain3D.tsx`](../backend/frontend/src/components/Brain3D.tsx). |
+| **VAD / DREAMER pipeline** | Export script, Ridge VAD, `/api/analyze/dreamer`, per-electrode Welch in API. |
+| **FastAPI `/api` prefix** | Matches Vite proxy paths. |
 
 ---
 
-## Fix / complete next (small, high impact)
+## Fix / complete next (high impact for judges)
 
-1. **FHIR outside MCP only** — Add **`POST /api/export/fhir`** (and optional query params for `row_index`, `patient_id`, `source`) so the web UI and Prompt Opinion can call HTTP without MCP. Optionally add a **Download JSON** button in `App.tsx`.
-2. **`export_fhir_tool` for DREAMER** — When `source=dreamer`, bundle **VAD + screening** from `analyze_dreamer_epoch` using the same `generate_fhir_bundle` shape (or a parallel builder for continuous scores).
-3. **FHIR validation** — Use **`fhir.resources`** (and optionally HAPI) to validate bundles before return; tighten R4 fields (`RiskAssessment`, `Observation.value*`) per profiling docs.
-
----
-
-## Data & personas (plan §2–3, Phase 1)
-
-- [ ] **DEAP / SEED loaders** — `load_dataset` returning `(trials, channels, time)`, `sfreq`, `channel_names` (not only Kaggle CSV + DREAMER export).
-- [ ] **`load_persona`** MCP + data — Alex / Jordan / … curated segments tied to real `.mat` trials once DEAP/SEED are available.
-- [ ] **EEG upload path** — Accept user `.edf` / `.csv` in API + UI (plan demo flow).
+1. **HTTP FHIR export** — `POST /api/export/fhir` (+ optional UI download).
+2. **`export_fhir_tool` for DREAMER** — Same bundle shape from `analyze_dreamer_epoch`.
+3. **FHIR validation** — `fhir.resources` / profiling cleanup.
+4. **Po MCP FHIR extension** — Implement `ai.promptopinion/fhir-context` + header handling (see above).
 
 ---
 
-## Synthetic & generative (plan §2.2, Phase 2)
+## Hackathon submission checklist (non-code)
 
-- [ ] **WGAN-GP** training + checkpoint.
-- [ ] **`generate_synthetic`** MCP tool.
-- [ ] **`interpolate_emotional_trajectory`** MCP tool + optional UI animation.
-
----
-
-## Features & models (Phases 3–4)
-
-- [ ] **Per-channel features** — DE, PSD, HOC, **asymmetry** on multi-channel epochs (DREAMER/DEAP), not only global Welch + CSV proxies.
-- [ ] **Classifier options** — `bi_hemispheric` / `4d_crnn` / TSS-style model (PyTorch), not only logistic + Ridge VAD.
-- [ ] **`screen_mental_health` spec** — Multi-segment `session_data`, longitudinal mode, full biomarker objects (FAA, θ/β, flags) per plan YAML.
+- [ ] Po **model** configured; **patient** created ([Getting Started](https://docs.promptopinion.ai/getting-started)).
+- [ ] **BYO agent** with STRAIN **MCP** attached; tested on **Launchpad**.
+- [ ] **Disclaimer** copy everywhere (not a medical device).
+- [ ] **Marketplace / Studio** publish steps per challenge brief.
+- [ ] Screen recording or live **Launchpad** demo path scripted (~5 min).
 
 ---
 
-## Explainability (Phase 5)
+## Stretch — original v2 spec (still open)
 
-- [ ] **LIME** (or Captum) for the deployed classifier, with **temporal** and **frequency** importance maps aligned to plan `explain_decision` outputs.
+### Data & personas
 
----
+- [ ] DEAP / SEED loaders · `load_persona` MCP · EEG upload API/UI.
 
-## MCP parity (plan §3.2, Phase 6)
+### Synthetic & generative
 
-- [ ] **`load_persona`**, **`generate_synthetic`**, **`interpolate_emotional_trajectory`**.
-- [ ] **`generate_brain_map`** — Return JSON mesh / electrode activations for non-React clients (UI already has a 3D view).
-- [ ] **`generate_frequency_visualization`** — SVG / structured band-by-region output.
-- [ ] **Optional:** machine-readable **YAML tool catalog** mirroring the plan (for judges / SHARP docs).
+- [ ] WGAN-GP · `generate_synthetic` · `interpolate_emotional_trajectory` MCP tools.
 
----
+### Models & screening depth
 
-## A2A & platform (plan §3.3, Phase 7 + Prompt Opinion)
+- [ ] Full asymmetry / multi-segment `screen_mental_health` · PyTorch classifiers beyond Ridge/logistic.
 
-- [ ] **Fork / adapt [`po-adk-python`](https://github.com/prompt-opinion/po-adk-python)** — One A2A v1 agent exposing STRAIN analysis + FHIR export; register with Prompt Opinion (`agent-card`, `X-API-Key`, `PO_PLATFORM_BASE_URL`).
-- [ ] **Five logical agents** — Either separate deployments or one orchestrator with distinct **agent cards** / skills (Data Curator, Analysis, Explainer, Synthetic, Visualization / Care Navigator).
+### Explainability
 
----
+- [ ] LIME / temporal-frequency maps.
 
-## 3D & viz polish (plan §4, Phase 8)
+### MCP parity
 
-- [ ] **True topography** — Surface mesh or better head model; channel values from real PSD pipeline.
-- [ ] **Hemispheric split view**, **frequency band panel**, **emotion trajectory** animation (plan storyboard).
+- [ ] `generate_brain_map` JSON · `generate_frequency_visualization` · optional YAML tool catalog.
 
----
+### A2A & multi-agent
 
-## UI / demo (plan §6, Phase 10)
+- [ ] **`po-adk-python`** (or TS) deployment with **v1** agent card ([A2A V1 Migration](https://docs.promptopinion.ai/a2a-v1-migration)); FHIR extension `https://app.promptopinion.ai/schemas/a2a/v1/fhir-context` ([a2a-fhir-context](https://docs.promptopinion.ai/fhir-context/a2a-fhir-context)).
+- [ ] Five logical agents vs one orchestrator — only if brief requires breadth.
 
-- [ ] **Tailwind + shadcn** (plan stack) — optional polish pass.
-- [ ] **Persona picker** + scripted **5-minute demo** flow in the app.
-- [ ] **Marketplace / Launchpad** rehearsal — ops checklist (not code).
+### UI polish
+
+- [ ] Tailwind/shadcn · persona picker · demo flow.
 
 ---
 
-## Suggested order (next sprints)
+## Suggested order (next 2 weeks)
 
-1. **HTTP FHIR export** + **DREAMER FHIR** in MCP.  
-2. **fhir.resources** validation + tighten resource shapes.  
-3. **DEAP loader** + one **persona** + **`load_persona`**.  
-4. **LIME** + **`generate_brain_map`** JSON for MCP.  
-5. **po-adk-python** external agent.
+1. **Stable Po demo:** SSE MCP + ngrok → **Configuration → MCP Servers** → **BYO agent Tools** → Launchpad.  
+2. **HTTP FHIR + DREAMER FHIR** in API/MCP.  
+3. **Po FHIR MCP extension** in `mcp_server` (initialize + headers).  
+4. **`fhir.resources` validation.**  
+5. Optional **external A2A** agent via **`po-adk-python`** calling FastAPI or `strain`.
 
 ---
 
-*Regenerate this file when major features land so the team has a single checklist.*
+*Regenerate when major features land.*

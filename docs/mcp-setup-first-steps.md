@@ -59,6 +59,8 @@ Restart Cursor or reload MCP, then open the MCP panel and confirm **strain-tools
 
 ## Step 5 — Optional: SSE + ngrok (Prompt Opinion)
 
+Per official docs: register remote MCP under **`Configuration → MCP Servers`** ([FHIR Context With MCP](https://docs.promptopinion.ai/fhir-context/mcp-fhir-context)), then attach that server to a **BYO agent** on the **Tools** tab ([BYO Agents](https://docs.promptopinion.ai/agents/byo-agents)).
+
 1. Copy [`.env.example`](../.env.example) to `.env` and tune `FASTMCP_HOST` / `FASTMCP_PORT`, or export vars in the shell.
 2. Run:
 
@@ -68,10 +70,11 @@ Restart Cursor or reload MCP, then open the MCP panel and confirm **strain-tools
    ```
 
 3. In another terminal: `ngrok http 8765` (or your `FASTMCP_PORT`).
-4. Use the HTTPS forwarding URL + **SSE path** (default **`/sse`**) when the Prompt Opinion workspace asks for the MCP server URL, e.g. `https://xxxx.ngrok-free.app/sse`.
+4. In Po **`Configuration → MCP Servers`**: add server → **`Continue`** (Po sends `initialize`). Paste the HTTPS forwarding URL + **SSE path** (default **`/sse`**), e.g. `https://xxxx.ngrok-free.app/sse`.
 5. Keep **`STRAIN_MCP_RELAX_DNS=1`** behind ngrok so the tunneled `Host` header is accepted (development only).
+6. **`Agents → BYO Agents`**: edit your agent → **Tools** → select **strain-tools**.
 
-More context: [prompt-opinion-hackathon.md](./prompt-opinion-hackathon.md).
+Full Po checklist + FHIR extension gap: [hackathon-remaining-tasks.md](./hackathon-remaining-tasks.md) · [prompt-opinion-hackathon.md](./prompt-opinion-hackathon.md).
 
 ## Troubleshooting
 

@@ -1,51 +1,54 @@
 # Prompt Opinion — Agents Assemble hackathon alignment
 
-**First steps to run the MCP server locally or with SSE:** [mcp-setup-first-steps.md](./mcp-setup-first-steps.md).
+**Run STRAIN MCP locally or over SSE:** [mcp-setup-first-steps.md](./mcp-setup-first-steps.md).
 
-This note maps the **“Agents Assemble – The Healthcare AI Endgame Challenge”** workflow (Prompt Opinion + MCP + A2A + FHIR) to this repo and the official GitHub ecosystem.
+**Remaining STRAIN tasks vs spec / Po:** [hackathon-remaining-tasks.md](./hackathon-remaining-tasks.md).
 
-## Official entry points
+## Official Prompt Opinion documentation
+
+| Topic | URL |
+|-------|-----|
+| Getting Started (LLM key, register, patient, agent, conversation) | [docs.promptopinion.ai/getting-started](https://docs.promptopinion.ai/getting-started) |
+| Model Configuration (`Configuration → Models`) | [docs.promptopinion.ai/model-configuration](https://docs.promptopinion.ai/model-configuration) |
+| A2A **v1** migration (agent card: `supportedInterfaces`, no top-level `url`) | [docs.promptopinion.ai/a2a-v1-migration](https://docs.promptopinion.ai/a2a-v1-migration) |
+| Agent Scopes (Workspace / Patient / Group) | [docs.promptopinion.ai/agents/agent-scopes](https://docs.promptopinion.ai/agents/agent-scopes) |
+| BYO Agents (system prompt, **Tools = MCP servers**, A2A, FHIR) | [docs.promptopinion.ai/agents/byo-agents](https://docs.promptopinion.ai/agents/byo-agents) |
+| External Agents (`/.well-known/agent-card.json`, consult flow) | [docs.promptopinion.ai/agents/external-agents](https://docs.promptopinion.ai/agents/external-agents) |
+| FHIR context overview (URL, token, patient id) | [docs.promptopinion.ai/fhir-context/overview](https://docs.promptopinion.ai/fhir-context/overview) |
+| **MCP + FHIR** (`ai.promptopinion/fhir-context`, headers on tool calls) | [docs.promptopinion.ai/fhir-context/mcp-fhir-context](https://docs.promptopinion.ai/fhir-context/mcp-fhir-context) |
+| **A2A + FHIR** (extension + message `metadata`) | [docs.promptopinion.ai/fhir-context/a2a-fhir-context](https://docs.promptopinion.ai/fhir-context/a2a-fhir-context) |
+
+## Web app & GitHub
 
 | Resource | URL |
 |----------|-----|
-| Prompt Opinion (marketing / challenge) | [https://www.promptopinion.ai/](https://www.promptopinion.ai/) |
-| Workspace / builder (per hackathon brief) | [https://app.promptopinion.ai/](https://app.promptopinion.ai/) |
-| SHARP-on-MCP spec (FHIR-oriented MCP tools) | [https://www.sharponmcp.com/](https://www.sharponmcp.com/) |
-| Platform docs (referenced from `po-overview`) | [https://docs.promptopinion.ai/](https://docs.promptopinion.ai/) |
+| Prompt Opinion | [https://www.promptopinion.ai/](https://www.promptopinion.ai/) |
+| Workspace | [https://app.promptopinion.ai/](https://app.promptopinion.ai/) |
+| Docs home | [https://docs.promptopinion.ai/](https://docs.promptopinion.ai/) |
+| SHARP-on-MCP | [https://www.sharponmcp.com/](https://www.sharponmcp.com/) |
 
-## GitHub org **[@prompt-opinion](https://github.com/prompt-opinion)** — what each repo is for
-
-The brief’s **“po-sdk”** maps to the **Google ADK sample agents**, not a repo literally named `po-sdk`:
+## GitHub org [@prompt-opinion](https://github.com/prompt-opinion)
 
 | Repository | Role |
 |------------|------|
-| [**po-overview**](https://github.com/prompt-opinion/po-overview) | Ecosystem hub: standards (MCP, A2A, FHIR), **repository map**, how builders vs organizations connect. |
-| [**po-community-mcp**](https://github.com/prompt-opinion/po-community-mcp) | **Community MCP server** pattern — extra **FHIR-related tools** on top of the default SHARP-on-MCP style server used with Prompt Opinion. |
-| [**po-adk-python**](https://github.com/prompt-opinion/po-adk-python) | **Python A2A agents** (Google ADK): `healthcare_agent`, `general_agent`, `orchestrator`; **A2A v1** agent cards; **FHIR context** in metadata; **deploy + register** with Prompt Opinion. |
-| [**po-adk-typescript**](https://github.com/prompt-opinion/po-adk-typescript) | Same idea in TypeScript. |
+| [**po-overview**](https://github.com/prompt-opinion/po-overview) | Ecosystem hub, repo map. |
+| [**po-community-mcp**](https://github.com/prompt-opinion/po-community-mcp) | Community MCP / FHIR-oriented patterns. |
+| [**po-adk-python**](https://github.com/prompt-opinion/po-adk-python) | Python A2A agents (Google ADK), agent cards, Po registration. |
+| [**po-adk-typescript**](https://github.com/prompt-opinion/po-adk-typescript) | Same in TypeScript. |
 
-**STRAIN’s `mcp_server`** is a separate **Python FastMCP** tool server (EEG / emotion / DREAMER). It complements (does not replace) `po-community-mcp` for FHIR-heavy tools. Long term you can:
+**STRAIN’s `strain-tools` MCP** (`mcp_server/`) is separate: EEG / CSV / DREAMER tools. Attach it to a **BYO agent** under **Tools** after registering it under **`Configuration → MCP Servers`** per Po docs.
 
-- **Reuse patterns** from `po-community-mcp` / SHARP-on-MCP for FHIR exports, or  
-- **Call** this repo’s FastAPI from a **po-adk-python**-style agent as custom tools.
+---
 
-## Hackathon paths vs this repo
+## How to include STRAIN MCP in your Prompt Opinion app
 
-### Option 1 — No-code agent (Prompt Opinion UI)
+1. Complete Po basics: [Getting Started](https://docs.promptopinion.ai/getting-started) + [Model Configuration](https://docs.promptopinion.ai/model-configuration).
+2. Run STRAIN MCP over **SSE** with a **public HTTPS URL** (e.g. ngrok). See [mcp-setup-first-steps.md](./mcp-setup-first-steps.md) § Step 5 and commands below.
+3. In Po: **`Configuration → MCP Servers`** → add your server URL. Po issues **`initialize`**; if you implement Po’s extension, declare **`ai.promptopinion/fhir-context`** per [FHIR Context With MCP](https://docs.promptopinion.ai/fhir-context/mcp-fhir-context).
+4. **`Agents → BYO Agents`** → create/edit agent → **Tools** tab → select this MCP server ([BYO Agents](https://docs.promptopinion.ai/agents/byo-agents)).
+5. Test on **Launchpad** with the right **scope** ([Agent Scopes](https://docs.promptopinion.ai/agents/agent-scopes)).
 
-- Sign in at **app.promptopinion.ai**, connect **Gemini** (e.g. **Gemini 1.5 Flash**).
-- Grounding: synthetic FHIR bundle import, upload FHIR JSON, or manual patient + notes.
-- Enable **A2A** and **FHIR context** in workspace settings per brief.
-- Use Launchpad to chat and validate patient-aware behavior.
-
-**STRAIN:** use for narrative + demo data; wire **FHIR `DiagnosticReport` / `Observation`** export (planned in product spec) to match this path.
-
-### Option 2 — **Custom MCP server** (best fit for STRAIN tools today)
-
-Prompt Opinion expects a **reachable MCP endpoint** (the brief mentions **ngrok**).
-
-1. **Export DREAMER epochs** and optional VAD model (see root `README.md`).
-2. Run this repo’s MCP server over **SSE** (not stdio), bind publicly or behind ngrok:
+### SSE commands (reference)
 
 ```bash
 cd /path/to/strain
@@ -53,38 +56,36 @@ source .venv/bin/activate
 export STRAIN_MCP_TRANSPORT=sse
 export FASTMCP_HOST=0.0.0.0
 export FASTMCP_PORT=8765
-# Allow tunneled Host headers (ngrok / Cloud Run preview):
-export STRAIN_MCP_RELAX_DNS=1
+export STRAIN_MCP_RELAX_DNS=1   # needed behind ngrok / odd Host headers
 python -m mcp_server.server
 ```
 
-3. Start **ngrok** (or Cloudflare Tunnel, etc.) on the same port, e.g. `ngrok http 8765`.
-4. In Prompt Opinion workspace, add the MCP server URL your platform expects — typically the **SSE base URL** from FastMCP (defaults include paths such as `/sse`; check `FASTMCP_SSE_PATH` / `FASTMCP_MESSAGE_PATH` via env or [FastMCP HTTP deployment](https://gofastmcp.com/deployment/http)).
-5. **Marketplace Studio:** publish the agent or MCP server before judging, per brief.
+Then e.g. `ngrok http 8765` and register **`https://<host>/sse`** (confirm path with FastMCP / server logs).
 
-**Tools exposed today:** `load_dataset_tool`, CSV feature/classify/explain/screen tools, DREAMER epoch feature + VAD tools (see `mcp_server/server.py`).
+**Tools exposed today:** see `mcp_server/server.py` (dataset meta, CSV features/classify/explain/screen, DREAMER analyze, `export_fhir_tool`, etc.).
 
-### Option 3 — **Custom A2A agent** (advanced)
+---
 
-- Follow [**po-adk-python**](https://github.com/prompt-opinion/po-adk-python) README section **“Connecting to Prompt Opinion”**: deploy a **public URL**, set `HEALTHCARE_AGENT_URL` (or your agent’s URL), `PO_PLATFORM_BASE_URL`, register **`.well-known/agent-card.json`**, use **`X-API-Key`** from the workspace.
-- Prompt Opinion injects **FHIR server URL**, **bearer token**, **patient ID** into A2A metadata; tools read from session state — ideal for a **clinical wrapper** around STRAIN.
+## External A2A agents
 
-**STRAIN:** implement an ADK agent that delegates “emotion / stress screening from EEG summary” to your **FastAPI** (`/api/analyze`, `/api/analyze/dreamer`) or in-process Python, while using PO’s FHIR tools for demographics and reporting.
+- Po registers agents via URL ending in **`/.well-known/agent-card.json`** ([External Agents](https://docs.promptopinion.ai/agents/external-agents)).
+- Follow **A2A v1** card shape ([A2A V1 Migration](https://docs.promptopinion.ai/a2a-v1-migration)).
+- FHIR-capable agents declare the extension from [FHIR Context With A2A](https://docs.promptopinion.ai/fhir-context/a2a-fhir-context).
+- **Consult** flow: Launchpad chat with a **BYO** agent → **Consult with another agent** → external agent ([External Agents](https://docs.promptopinion.ai/agents/external-agents)).
 
-## Standards stack (from `po-overview`)
+**STRAIN + A2A:** implement a small deployed agent (e.g. fork [**po-adk-python**](https://github.com/prompt-opinion/po-adk-python)) that calls FastAPI (`/api/...`) or imports `strain`, then register in Po.
 
-- **MCP** — tool discovery and invocation (this repo’s `strain-tools` server).  
-- **A2A** — multi-agent coordination (`po-adk-python` / `a2aproject/a2a-python`).  
-- **FHIR** — patient context and interoperable outputs ([community MCP](https://github.com/prompt-opinion/po-community-mcp), SHARP-on-MCP).
+---
 
-## Suggested build order for the challenge
+## Suggested build order
 
-1. **MCP on SSE + ngrok** → register in Prompt Opinion → demonstrate tools in Launchpad.  
-2. **Synthetic FHIR patient** in workspace + align copy with “not a medical device”.  
-3. **`export_fhir`-style bundle** from screening results (extend API/MCP).  
-4. Optional: **fork `po-adk-python`** and add a thin **STRAIN specialist** agent with A2A v1 card.
+1. Po account + model + patient ([Getting Started](https://docs.promptopinion.ai/getting-started)).  
+2. STRAIN MCP **SSE + ngrok** → **Configuration → MCP Servers** → **BYO agent Tools** → Launchpad.  
+3. STRAIN **FHIR bundle** improvements (`POST /api/export/fhir`, DREAMER parity) — see [hackathon-remaining-tasks.md](./hackathon-remaining-tasks.md).  
+4. Optional: **`ai.promptopinion/fhir-context`** in MCP `initialize` + read Po headers in tools.  
+5. Optional: **po-adk-python** external agent with v1 card.
 
 ## Community
 
-- **Discord** — hackathon / office hours (link from Prompt Opinion site or challenge page).  
-- Issues on **po-overview** for cross-repo platform questions.
+- Discord / challenge links from [promptopinion.ai](https://www.promptopinion.ai/).  
+- **po-overview** issues for cross-repo questions.
