@@ -52,8 +52,8 @@ mcp = FastMCP(
 
 original_get_capabilities = mcp._mcp_server.get_capabilities
 
-def _get_capabilities_with_fhir(experimental_capabilities: dict[str, dict[str, Any]] | None = None) -> Any:
-    caps = original_get_capabilities(experimental_capabilities)
+def _get_capabilities_with_fhir(*args: Any, **kwargs: Any) -> Any:
+    caps = original_get_capabilities(*args, **kwargs)
     if not caps.experimental:
         caps.experimental = {}
     caps.experimental["ai.promptopinion/fhir-context"] = {}
