@@ -15,9 +15,9 @@ from __future__ import annotations
 import argparse
 import json
 import os
-from typing import Any
+from typing import Any, Literal
 
-from mcp.server.fastmcp import FastMCP
+from mcp.server.fastmcp import Context, FastMCP
 from mcp.server.transport_security import TransportSecuritySettings
 
 from strain.features.extract import extract_features
@@ -48,6 +48,19 @@ mcp = FastMCP(
         enable_dns_rebinding_protection=not _mcp_relax_dns,
     ),
 )
+
+
+original_get_capabilities = mcp._mcp_server.get_capabilities
+
+def _get_capabilities_with_fhir(experimental_capabilities: dict[str, dict[str, Any]] | None = None) -> Any:
+    caps = original_get_capabilities(experimental_capabilities)
+    if not caps.experimental:
+        caps.experimental = {}
+    caps.experimental["ai.promptopinion/fhir-context"] = {}
+    return caps
+
+mcp._mcp_server.get_capabilities = _get_capabilities_with_fhir
+
 
 
 def _json(data: Any) -> str:
@@ -150,16 +163,40 @@ def screen_mental_health_tool(csv_path: str | None = None, row_index: int = 0) -
 
 
 @mcp.tool()
-def export_fhir_tool(csv_path: str | None = None, row_index: int = 0, patient_id: str = "demo-alex") -> str:
+def export_fhir_tool(
+    ctx: Context,
+    source: Literal["csv", "dreamer"] = "csv",
+    index: int = 0,
+    patient_id: str | None = None,
+    csv_path: str | None = None,
+    processed_dir: str | None = None,
+) -> str:
     """Generate a FHIR R4 Bundle containing mental health risk assessments from EEG screening."""
-    ds = load_emotions_csv(csv_path)
-    idx = row_index % ds.X.shape[0]
-    row = ds.X[idx]
-    bundle = load_classifier_pipeline()
-    feats = extract_features(row, ds.feature_names)
-    cls = classify_emotion(row, feature_names=ds.feature_names, bundle=bundle)
-    screening = screen_mental_health(cls, feats)
-    return _json(generate_fhir_bundle(screening, patient_id=patient_id))
+    # 1. Grab FHIR context from Starlette headers if available
+    req = getattr(ctx.request_context, "request", None)
+    if req and hasattr(req, "headers"):
+        if not patient_id:
+            patient_id = req.headers.get("x-patient-id")
+
+    # default fallback
+    if not patient_id:
+        patient_id = "demo-alex"
+
+    if source == "dreamer":
+        out = analyze_dreamer_epoch(index, processed_dir=processed_dir)
+        screening = out.get("screening")
+        if not screening:
+            return _json({"error": "No screening result available (VAD model not trained?)"})
+        return _json(generate_fhir_bundle(screening, patient_id=patient_id))
+    else:
+        ds = load_emotions_csv(csv_path)
+        idx = index % ds.X.shape[0]
+        row = ds.X[idx]
+        bundle = load_classifier_pipeline()
+        feats = extract_features(row, ds.feature_names)
+        cls = classify_emotion(row, feature_names=ds.feature_names, bundle=bundle)
+        screening = screen_mental_health(cls, feats)
+        return _json(generate_fhir_bundle(screening, patient_id=patient_id))
 
 
 def main() -> None:
