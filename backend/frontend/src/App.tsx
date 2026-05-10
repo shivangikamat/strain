@@ -542,9 +542,7 @@ export default function App() {
                     θ/α: {dreamerData.features.spectral_ratios.theta_alpha.toFixed(3)} · β/α:{' '}
                     {dreamerData.features.spectral_ratios.beta_alpha.toFixed(3)}
                   </p>
-                  <pre className="bands">
-                    {JSON.stringify(dreamerData.features.band_mean_power, null, 2)}
-                  </pre>
+
                   
                   {dreamerData.screening && (
                     <div style={{marginTop: '2rem'}}>
