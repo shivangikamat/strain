@@ -224,7 +224,6 @@ export default function App() {
           <div className="nav-logo-icon">●</div> STRAIN
         </div>
 
-        <button className="nav-btn">GET THE APP</button>
       </nav>
 
       {/* Hero Section */}
