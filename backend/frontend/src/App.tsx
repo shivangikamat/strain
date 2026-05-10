@@ -498,7 +498,7 @@ export default function App() {
         <div className="white-section-inner">
           <div className="grid2">
             <div className="panel" style={{gridColumn: '1 / -1', background: 'transparent', border: 'none', boxShadow: 'none'}}>
-              <h2 style={{fontSize: '3rem', margin: 0}}>The ultimate library<br/>for your products</h2>
+              <h2 style={{fontSize: '3rem', margin: 0, lineHeight: '1.1'}}>The ultimate library<br/>for your products</h2>
             </div>
             {mode === 'csv' && csvData && (
               <>
