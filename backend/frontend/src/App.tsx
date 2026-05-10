@@ -223,12 +223,7 @@ export default function App() {
         <div className="nav-logo">
           <div className="nav-logo-icon">●</div> STRAIN
         </div>
-        <div className="nav-links">
-          <a href="#">COURSES</a>
-          <a href="#">ABOUT US</a>
-          <a href="#">BLOG</a>
-          <a href="#">PROJECTS</a>
-        </div>
+
         <button className="nav-btn">GET THE APP</button>
       </nav>
 
