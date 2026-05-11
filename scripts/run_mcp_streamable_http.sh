@@ -12,10 +12,11 @@ if [[ -f "$ROOT/.env" ]]; then
   # shellcheck source=/dev/null
   set -o allexport; source "$ROOT/.env"; set +o allexport
 fi
+# Hard-override transport settings — .env may set stdio/localhost for local use
 export STRAIN_MCP_TRANSPORT=streamable-http
-export FASTMCP_HOST=${FASTMCP_HOST:-0.0.0.0}
+export FASTMCP_HOST=0.0.0.0
 export FASTMCP_PORT=${FASTMCP_PORT:-8765}
-export STRAIN_MCP_RELAX_DNS=${STRAIN_MCP_RELAX_DNS:-1}
+export STRAIN_MCP_RELAX_DNS=1
 echo "MCP Streamable HTTP on http://${FASTMCP_HOST}:${FASTMCP_PORT}${FASTMCP_STREAMABLE_HTTP_PATH:-/mcp}"
 echo "Example ngrok: ngrok http ${FASTMCP_PORT}"
 echo "Prompt Opinion endpoint: https://<subdomain>.ngrok-free.app${FASTMCP_STREAMABLE_HTTP_PATH:-/mcp} (transport: Streamable HTTP)"
