@@ -7,6 +7,10 @@ if [[ -f "$ROOT/.venv/bin/activate" ]]; then
   # shellcheck source=/dev/null
   source "$ROOT/.venv/bin/activate"
 fi
+if [[ -f "$ROOT/.env" ]]; then
+  # shellcheck source=/dev/null
+  set -o allexport; source "$ROOT/.env"; set +o allexport
+fi
 export STRAIN_MCP_TRANSPORT=${STRAIN_MCP_TRANSPORT:-sse}
 export FASTMCP_HOST=${FASTMCP_HOST:-0.0.0.0}
 export FASTMCP_PORT=${FASTMCP_PORT:-8765}

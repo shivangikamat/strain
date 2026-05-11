@@ -301,7 +301,7 @@ def patient_screening_markdown_report_tool(
     Run emotion + demo screening for one PatientEmotionContext.
 
     Returns JSON (Prompt Opinion-compatible) with a **markdown** field for the chat UI, plus optional **dashboard_url**.
-    Pass dashboard_base_url or set STRAIN_PUBLIC_DASHBOARD_URL (e.g. https://your-vite.ngrok-free.app).
+    Leave dashboard_base_url as null — the server reads STRAIN_PUBLIC_DASHBOARD_URL from its environment automatically.
     """
     try:
         try:
@@ -407,7 +407,7 @@ def analyze_named_patient_tool(
     Returns JSON with a **markdown** field — the full clinical report with brain scan image,
     risk charts, VAD charts, model interpretation, and personalised recommended steps.
 
-    Set STRAIN_PUBLIC_DASHBOARD_URL or pass dashboard_base_url for image and dashboard URLs.
+    Leave dashboard_base_url as null — the server reads STRAIN_PUBLIC_DASHBOARD_URL from its environment automatically.
     """
     try:
         import datetime
@@ -617,7 +617,7 @@ def get_demo_patient_dashboard_link_tool(
     Accepts first name, full name, or id slug for any enrolled patient:
       "Sam Rivera", "Alex Chen", "Maria Santos", "James O'Brien" (or first name / slug).
 
-    Set STRAIN_PUBLIC_DASHBOARD_URL or pass dashboard_base_url for the base URL.
+    Leave dashboard_base_url as null — the server reads STRAIN_PUBLIC_DASHBOARD_URL from its environment automatically.
     Returns JSON with: patient_id, name, tag, epoch_index, dashboard_url.
     """
     try:
