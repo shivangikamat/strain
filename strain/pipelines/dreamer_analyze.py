@@ -60,7 +60,10 @@ def analyze_dreamer_epoch(
             pred_vad,
             bundle=bundle,
         )
-        screening = dreamer_vad_screening(pred_vad)
+        screening = dreamer_vad_screening(
+            pred_vad,
+            beta_alpha=feats["spectral_ratios"].get("beta_alpha"),
+        )
     except FileNotFoundError:
         pass
 

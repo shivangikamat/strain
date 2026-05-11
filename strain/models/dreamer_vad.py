@@ -195,12 +195,20 @@ def explain_vad_ridge(
     }
 
 
-def dreamer_vad_screening(pred: dict[str, float], true_v: dict[str, float] | None = None) -> dict[str, Any]:
-    """Map continuous VAD to demo risk copy (non-clinical)."""
+def dreamer_vad_screening(
+    pred: dict[str, float],
+    beta_alpha: float | None = None,
+) -> dict[str, Any]:
+    """Map continuous VAD (+ optional beta_alpha) to demo risk scores (non-clinical)."""
     v = pred["valence"]
     a = pred["arousal"]
+    d = pred["dominance"]
     dep = max(0.0, min(100.0, (3.0 - v) * 25.0 + max(0.0, a - 3.0) * 10.0))
     anx = max(0.0, min(100.0, (a - 2.5) * 22.0 + abs(v - 3.0) * 5.0))
+    if beta_alpha is not None:
+        cog = min(100.0, max(0.0, beta_alpha / 3.0 * 100.0))
+    else:
+        cog = min(100.0, max(0.0, (a - 1.0) / 4.0 * 60.0 + (5.0 - d) / 4.0 * 40.0))
     rec = "no_concern"
     if dep > 65 or anx > 65:
         rec = "monitor"
@@ -210,8 +218,9 @@ def dreamer_vad_screening(pred: dict[str, float], true_v: dict[str, float] | Non
         "disclaimer": "Demonstration mapping from model VAD only — not clinical.",
         "depression_risk": {"score": dep, "note": "Higher when predicted valence is low."},
         "anxiety_risk": {"score": anx, "note": "Higher when predicted arousal is high."},
+        "cognitive_load": {"score": cog},
         "recommendation": rec,
         "key_findings": [
-            f"Predicted valence/arousal/dominance: {v:.2f} / {a:.2f} / {pred['dominance']:.2f}",
+            f"Predicted valence/arousal/dominance: {v:.2f} / {a:.2f} / {d:.2f}",
         ],
     }

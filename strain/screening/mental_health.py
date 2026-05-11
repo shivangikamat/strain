@@ -21,9 +21,9 @@ def screen_mental_health(
     ratios = (features or {}).get("spectral_ratios", {})
     beta_alpha = float(ratios.get("beta_alpha", 1.0))
 
-    # Map to 0–100 demo scores (not validated biomarkers)
     depression_risk = min(100.0, max(0.0, 55.0 * p_neg + 8.0 * max(0.0, beta_alpha - 1.0)))
     anxiety_risk = min(100.0, max(0.0, 45.0 * (1.0 - p_neu) + 10.0 * max(0.0, beta_alpha - 1.0)))
+    cognitive_load = min(100.0, max(0.0, beta_alpha / 3.0 * 100.0))
 
     rec = "no_concern"
     if depression_risk > 70 or anxiety_risk > 70:
@@ -40,10 +40,7 @@ def screen_mental_health(
         ),
         "depression_risk": {"score": depression_risk, "confidence": classification.get("confidence")},
         "anxiety_risk": {"score": anxiety_risk, "confidence": classification.get("confidence")},
-        "cognitive_risk": {
-            "score": float(30.0 * p_neg + 20.0 * (1.0 - p_pos)),
-            "note": "Placeholder composite for demo.",
-        },
+        "cognitive_load": {"score": cognitive_load},
         "recommendation": rec,
         "key_findings": [
             f"Emotion model: NEGATIVE {p_neg:.2f}, NEUTRAL {p_neu:.2f}, POSITIVE {p_pos:.2f}.",
