@@ -18,6 +18,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+from pathlib import Path
 import traceback
 from typing import Any, Literal
 
@@ -568,19 +569,30 @@ def analyze_named_patient_tool(
             md_lines.append(f"{i}. {step}")
         md_lines.append("")
 
+        report_url = f"{base}/api/report/{pid}"
         md_lines += [
             "---",
             "",
             f"[**Open interactive STRAIN dashboard →**]({dashboard_url})",
             "",
+            f"[**Download / view full report (Markdown) →**]({report_url})",
+            "",
             "> *STRAIN EEG screening is for research purposes. Not a medical device. Not for clinical diagnosis or treatment decisions.*",
         ]
 
         md = "\n".join(md_lines)
+
+        # Save report to disk so FastAPI can serve it as a viewable/downloadable file
+        _reports_dir = Path(__file__).parent.parent / "data" / "reports"
+        _reports_dir.mkdir(parents=True, exist_ok=True)
+        report_path = _reports_dir / f"{pid}.md"
+        report_path.write_text(md, encoding="utf-8")
+
         return _json({
             "format": "markdown",
             "markdown": md,
             "dashboard_url": dashboard_url,
+            "report_url": report_url,
             "patient_id": pid,
             "name": meta["name"],
             "epoch_index": epoch_idx,

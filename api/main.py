@@ -326,6 +326,21 @@ def export_fhir(body: ExportFhirRequest) -> dict[str, Any]:
         raise HTTPException(status_code=404, detail=str(e)) from e
 
 
+@api.get("/report/{patient_id}")
+def get_report(patient_id: str) -> Response:
+    """Serve the latest saved Markdown report for a patient as plain text (browser-viewable)."""
+    from pathlib import Path
+    report_path = Path(__file__).parent.parent / "data" / "reports" / f"{patient_id}.md"
+    if not report_path.exists():
+        raise HTTPException(status_code=404, detail=f"No report found for '{patient_id}'. Run analyze_named_patient_tool first.")
+    content = report_path.read_text(encoding="utf-8")
+    return Response(
+        content=content,
+        media_type="text/plain; charset=utf-8",
+        headers={"Content-Disposition": f'inline; filename="strain-report-{patient_id}.md"'},
+    )
+
+
 @api.get("/dataset/meta")
 def dataset_meta(csv_path: str | None = None) -> dict[str, Any]:
     try:
