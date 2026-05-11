@@ -13,8 +13,8 @@ export function ConnectScreen({ onStart }: Props) {
 
   useEffect(() => {
     fetch('/api/demo-patients')
-      .then((r) => r.json())
-      .then((data: DemoPatient[]) => setPatients(data))
+      .then((r) => { if (!r.ok) throw new Error('not ok'); return r.json() })
+      .then((data: unknown) => { if (Array.isArray(data)) setPatients(data as DemoPatient[]) })
       .catch(() => {/* API unreachable — start button stays disabled */})
 
     const timer = setTimeout(() => setDetecting(false), 2500)
