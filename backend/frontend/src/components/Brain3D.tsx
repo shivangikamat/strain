@@ -39,13 +39,72 @@ function scalpPosition(dir: [number, number, number]): [number, number, number] 
   return [(x / len) * r, (y / len) * r, (z / len) * r]
 }
 
-function ElectrodeMarker({ position, value }: { position: [number, number, number]; value: number }) {
+function DendriteLines({
+  origin,
+  value,
+  color,
+}: {
+  origin: [number, number, number]
+  value: number
+  color: string
+}) {
+  const matRef = useRef<THREE.LineBasicMaterial>(null)
+
+  const geometry = useMemo(() => {
+    const geo = new THREE.BufferGeometry()
+    const positions: number[] = []
+    const [ox, oy, oz] = origin
+    const len = Math.sqrt(ox * ox + oy * oy + oz * oz) || 1
+    const nx = ox / len
+    const ny = oy / len
+    const nz = oz / len
+
+    for (let i = 0; i < 4; i++) {
+      const angle = (i / 4) * Math.PI * 2
+      const spread = 0.45
+      const dx = nx + Math.cos(angle) * spread
+      const dy = ny + Math.sin(angle) * spread
+      const dz = nz + 0.05
+      const dl = Math.sqrt(dx * dx + dy * dy + dz * dz) || 1
+      const length = 0.18 + (i % 3) * 0.08
+      positions.push(
+        ox, oy, oz,
+        ox + (dx / dl) * length,
+        oy + (dy / dl) * length,
+        oz + (dz / dl) * length,
+      )
+    }
+    geo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3))
+    return geo
+  }, [origin])
+
+  useFrame(({ clock }) => {
+    if (matRef.current) {
+      matRef.current.opacity =
+        0.15 + Math.abs(Math.sin(clock.elapsedTime * value * 2.5 + origin[0])) * 0.45
+    }
+  })
+
+  return (
+    <lineSegments geometry={geometry} renderOrder={1}>
+      <lineBasicMaterial ref={matRef} color={color} transparent opacity={0.3} />
+    </lineSegments>
+  )
+}
+
+function ElectrodeMarker({
+  position,
+  value,
+}: {
+  position: [number, number, number]
+  value: number
+}) {
   const meshRef = useRef<THREE.Mesh>(null)
 
   const color = useMemo(() => {
-    if (value > 2.0) return '#ef4444'
+    if (value > 2.0) return '#fbbf24'
     if (value > 1.2) return '#f97316'
-    if (value > 0.6) return '#eab308'
+    if (value > 0.6) return '#a855f7'
     return '#22c55e'
   }, [value])
 
@@ -57,17 +116,20 @@ function ElectrodeMarker({ position, value }: { position: [number, number, numbe
   })
 
   return (
-    <mesh position={position} ref={meshRef} renderOrder={2}>
-      <sphereGeometry args={[0.048, 18, 18]} />
-      <meshStandardMaterial
-        color={color}
-        emissive={color}
-        emissiveIntensity={Math.min(value * 0.45, 1.2)}
-        toneMapped={false}
-        depthTest
-        depthWrite
-      />
-    </mesh>
+    <group>
+      <mesh position={position} ref={meshRef} renderOrder={2}>
+        <sphereGeometry args={[0.048, 18, 18]} />
+        <meshStandardMaterial
+          color={color}
+          emissive={color}
+          emissiveIntensity={Math.min(value * 0.45, 1.2)}
+          toneMapped={false}
+          depthTest
+          depthWrite
+        />
+      </mesh>
+      <DendriteLines origin={position} value={value} color={color} />
+    </group>
   )
 }
 
@@ -197,14 +259,20 @@ function SceneContent({ bandMeanPower }: { bandMeanPower: Record<string, number>
   )
 }
 
-export function Brain3D({ bandMeanPower }: { bandMeanPower: Record<string, number> | undefined }) {
+export function Brain3D({
+  bandMeanPower,
+  height = '280px',
+}: {
+  bandMeanPower: Record<string, number> | undefined
+  height?: string | number
+}) {
   return (
     <div
       style={{
         width: '100%',
         maxWidth: '100%',
         minWidth: 0,
-        height: '280px',
+        height,
         boxSizing: 'border-box',
         background: 'rgba(0,0,0,0.2)',
         borderRadius: '16px',
