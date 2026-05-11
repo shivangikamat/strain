@@ -29,3 +29,16 @@ def test_dreamer_vad_screening_has_cognitive_load() -> None:
     result = dreamer_vad_screening(pred, beta_alpha=2.1)
     assert "cognitive_load" in result
     assert 0 <= result["cognitive_load"]["score"] <= 100
+
+
+def test_demo_patients_returns_three_profiles() -> None:
+    client = TestClient(app)
+    r = client.get("/api/demo-patients")
+    assert r.status_code == 200
+    data = r.json()
+    assert len(data) == 3
+    for p in data:
+        assert "id" in p
+        assert "name" in p
+        assert "epoch_index" in p
+        assert isinstance(p["epoch_index"], int)
