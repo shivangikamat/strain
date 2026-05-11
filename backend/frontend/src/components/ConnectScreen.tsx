@@ -15,7 +15,7 @@ export function ConnectScreen({ onStart }: Props) {
     fetch('/api/demo-patients')
       .then((r) => { if (!r.ok) throw new Error('not ok'); return r.json() })
       .then((data: unknown) => { if (Array.isArray(data)) setPatients(data as DemoPatient[]) })
-      .catch(() => {/* API unreachable — start button stays disabled */})
+      .catch(() => {/* API unreachable — start button stays disabled */ })
 
     const timer = setTimeout(() => setDetecting(false), 2500)
     return () => clearTimeout(timer)
@@ -41,13 +41,6 @@ export function ConnectScreen({ onStart }: Props) {
       </nav>
 
       <main className="connect-main">
-        <div className="lines-container">
-          <svg xmlns="http://www.w3.org/2000/svg">
-            <path d="M0,100 Q400,300 800,100 T1600,100 M0,300 Q400,100 800,300 T1600,300" />
-            <path d="M0,500 Q400,700 800,500 T1600,500" />
-            <path d="M400,0 L400,800 M1200,0 L1200,800" />
-          </svg>
-        </div>
         <div className="connect-hero-text">
           <h1>Connect your <span>EEG headset</span></h1>
           <p>

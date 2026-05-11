@@ -466,7 +466,7 @@ def analyze_named_patient_tool(
                     "data": [round(dep, 1), round(anx, 1), round(cog, 1)],
                     "backgroundColor": ["rgba(168,85,247,0.85)", "rgba(251,191,36,0.85)", "rgba(6,182,212,0.85)"],
                     "borderColor": ["#a855f7", "#fbbf24", "#06b6d4"],
-                    "borderWidth": 1,
+                    "borderWidth": 2,
                 }],
             },
             "options": {

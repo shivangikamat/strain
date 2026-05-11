@@ -4,15 +4,6 @@
 
 Hackathon prototype: emotion classification and **non-clinical** demo screening from Kaggle-style tabular EEG features in [`data/emotions.csv`](data/emotions.csv) (default path; override with `STRAIN_EMOTIONS_CSV`).
 
-## Recent Hackathon Updates (v2)
-
-We've completely overhauled the stack to support **Prompt Opinion**'s multi-agent A2A framework and **FHIR** compliance:
-- **FHIR R4 API**: Full `fhir.resources`-validated `Bundle` export (`POST /api/export/fhir`) for both CSV and DREAMER datasets.
-- **Prompt Opinion A2A Integration**: Includes a standalone external healthcare agent compliant with the A2A v1 specification (hosted in `/po-adk-python` serving `/.well-known/agent-card.json`).
-- **MCP Server Enhancements**: Our FastMCP server dynamically registers the `ai.promptopinion/fhir-context` capability and handles `X-FHIR-Server-URL`, `X-FHIR-Access-Token`, and `X-Patient-ID` headers for robust context sharing.
-- **PDF Report Generation**: One-click download functionality in the React dashboard generates clean, print-optimized PDF reports of brain activity and mental health proxies.
-- **UI/UX Overhaul**: Streamlined layout, improved typographic spacing, and removed unnecessary clutter for a highly professional presentation.
-
 ## DREAMER — real multi-channel EEG epoch tensors (recommended next step)
 
 **Why DREAMER:** single open file ([Zenodo record 546113](https://zenodo.org/records/546113)), **14 channels @ 128 Hz**, trial-level **valence / arousal / dominance** (1–5). No access request (unlike DEAP/SEED), so it is the most **accessible** path to true brainwave tensors that still matches the hackathon plan (low-channel validation + biomarker story).
