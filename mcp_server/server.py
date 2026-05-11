@@ -61,15 +61,14 @@ def _sse_bind_from_env() -> tuple[str, int]:
 _SSE_HOST, _SSE_PORT = _sse_bind_from_env()
 
 _MCP_INSTRUCTIONS = (
-    "STRAIN v2.0 — healthcare hackathon prototype tools for EEG-derived emotion screening "
-    "(tabular Kaggle features) and DREAMER multi-channel epochs (VAD regression). "
-    "Outputs are for research and demonstration only — not a medical device. "
-    "For Prompt Opinion BYO: call patient_screening_markdown_report_tool with PatientEmotionContext JSON; "
-    "the tool returns JSON with a **markdown** string — render that field as the user-facing Markdown message "
-    "(some MCP hosts require JSON tool output, not raw Markdown). "
-    "Use example_patient_emotion_context_json_tool as a template. "
-    "Set STRAIN_PUBLIC_DASHBOARD_URL to your public Vite/ngrok origin for dashboard links. "
-    "MCP SSE/HTTP URL is only for tool transport — user-facing charts use the dashboard link inside markdown."
+    "STRAIN v2.0 — EEG neural screening platform. Enrolled patients: Sam Rivera (26, PhD Student, cognitive overload), "
+    "Alex Chen (32, Software Engineer, high stress), Maria Santos (28, Artist, calm/focused), "
+    "James O'Brien (58, Executive, elevated arousal). "
+    "Use analyze_named_patient_tool(patient_name) to run a full screening for any enrolled patient — "
+    "pass the full name or first name. Returns JSON with a markdown field; render that field verbatim. "
+    "Use get_demo_patient_dashboard_link_tool(patient_name) to get the dashboard link without running analysis. "
+    "Set STRAIN_PUBLIC_DASHBOARD_URL to your public ngrok origin for images and links to work. "
+    "Outputs are for research and demonstration only — not a medical device."
 )
 
 _mcp_relax_dns = os.environ.get("STRAIN_MCP_RELAX_DNS", "").lower() in ("1", "true", "yes")
@@ -404,7 +403,7 @@ def analyze_named_patient_tool(
     """
     Run a full STRAIN EEG neural screening for a named enrolled patient.
 
-    Accepts: "Alex Chen", "Maria Santos", "James O'Brien" (or first name / slug).
+    Accepts: "Sam Rivera", "Alex Chen", "Maria Santos", "James O'Brien" (or first name / slug).
     Returns JSON with a **markdown** field — the full clinical report with brain scan image,
     risk charts, VAD charts, model interpretation, and personalised recommended steps.
 
@@ -615,8 +614,8 @@ def get_demo_patient_dashboard_link_tool(
     """
     Return the dashboard deep-link URL for a named demo patient.
 
-    Accepts first name, full name, or id slug:
-      "Alex", "Alex Chen", "alex-chen" → https://…/?patient=alex-chen
+    Accepts first name, full name, or id slug for any enrolled patient:
+      "Sam Rivera", "Alex Chen", "Maria Santos", "James O'Brien" (or first name / slug).
 
     Set STRAIN_PUBLIC_DASHBOARD_URL or pass dashboard_base_url for the base URL.
     Returns JSON with: patient_id, name, tag, epoch_index, dashboard_url.
