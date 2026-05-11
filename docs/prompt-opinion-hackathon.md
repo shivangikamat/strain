@@ -60,7 +60,7 @@ export STRAIN_MCP_RELAX_DNS=1   # needed behind ngrok / odd Host headers
 python -m mcp_server.server
 ```
 
-Then e.g. `ngrok http 8765` and register **`https://<host>/sse`** (confirm path with FastMCP / server logs).
+Then e.g. `ngrok http 8765` and register **`https://<host>/sse`** when Po’s transport is **SSE** (confirm path with FastMCP / server logs). If Po is set to **Streamable HTTP**, run `STRAIN_MCP_TRANSPORT=streamable-http` (or `./scripts/run_mcp_streamable_http.sh`) and use **`https://<host>/mcp`** instead — mixing Streamable HTTP with a **`/sse`** URL yields **405** on POST.
 
 **Tools exposed today:** see `mcp_server/server.py` (dataset meta, CSV features/classify/explain/screen, DREAMER analyze, `export_fhir_tool`, etc.).
 

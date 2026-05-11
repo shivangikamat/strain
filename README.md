@@ -83,6 +83,8 @@ cd backend/frontend && npm run dev
 
 Open `http://localhost:5173` and pick a row index to inspect predictions and demo risk scores.
 
+**Deep links (Prompt Opinion / MCP):** the dashboard reads `?mode=csv|dreamer`, `row`, `epoch`, `patientId`, `patientName`. Example: `http://localhost:5173/?mode=csv&row=3&patientId=pat-3&patientName=Alex`. MCP tool `patient_screening_markdown_report_tool` and **`POST /api/patient/summary`** build Markdown plus a link when **`STRAIN_PUBLIC_DASHBOARD_URL`** is set (see [`.env.example`](.env.example)). The **MCP SSE URL** is only for tool transport to Po — charts live on the **dashboard** link, not on `/sse`.
+
 The **Live Brain Activity** view loads `public/models/brain_sliced.glb` (see `BRAIN_GLB_URL` in `Brain3D.tsx`); swap that constant for a CDN URL if you prefer not to vendor the file.
 
 ## MCP server (`strain-tools`)

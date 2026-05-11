@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 from typing import Any, Literal
 
 from fastapi import APIRouter, FastAPI, HTTPException, Query
@@ -14,12 +15,26 @@ from strain.io.catalog import load_dataset_meta
 from strain.io.emotions_csv import load_dataset, load_emotions_csv
 from strain.models.classifier import train_and_save_baseline
 from strain.models.dreamer_vad import train_and_save_dreamer_vad
+from strain.demo.patient_context import (
+    PatientEmotionContext,
+    build_dashboard_deeplink,
+    format_screening_markdown,
+    run_emotion_pipeline_for_context,
+)
 
 app = FastAPI(title="STRAIN API", version="0.1.0")
 
+_cors_base = ["http://localhost:5173", "http://127.0.0.1:5173"]
+_cors_extra = os.environ.get("STRAIN_CORS_ORIGINS", "").strip()
+if _cors_extra:
+    _cors_base = [
+        *_cors_base,
+        *[o.strip() for o in _cors_extra.split(",") if o.strip()],
+    ]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
+    allow_origins=_cors_base,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -56,6 +71,16 @@ class ExportFhirRequest(BaseModel):
     patient_id: str = "demo-alex"
     csv_path: str | None = None
     dreamer_processed_dir: str | None = None
+
+
+class PatientSummaryRequest(BaseModel):
+    """Run STRAIN for one demo patient and return Markdown + dashboard deep link."""
+
+    patient: PatientEmotionContext
+    dashboard_base_url: str | None = Field(
+        default=None,
+        description="Public origin of the Vite app, e.g. https://xxx.ngrok-free.app (defaults to STRAIN_PUBLIC_DASHBOARD_URL).",
+    )
 
 
 @app.get("/health")
@@ -104,6 +129,28 @@ def analyze_dreamer(body: AnalyzeDreamerRequest) -> dict[str, Any]:
         )
     except FileNotFoundError as e:
         raise HTTPException(status_code=404, detail=str(e)) from e
+
+
+@api.post("/patient/summary")
+def patient_summary(body: PatientSummaryRequest) -> dict[str, Any]:
+    """Validate patient context JSON, run analysis, return Markdown + deep link for the web UI."""
+    base = (body.dashboard_base_url or os.environ.get("STRAIN_PUBLIC_DASHBOARD_URL") or "").strip()
+    try:
+        pipeline = run_emotion_pipeline_for_context(body.patient)
+    except FileNotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e)) from e
+    out: dict[str, Any] = {
+        "patient": body.patient.model_dump(),
+        "pipeline": pipeline,
+        "markdown": format_screening_markdown(
+            body.patient,
+            pipeline,
+            dashboard_base_url=base or None,
+        ),
+    }
+    if base:
+        out["dashboard_url"] = build_dashboard_deeplink(base, body.patient)
+    return out
 
 
 @api.post("/export/fhir")

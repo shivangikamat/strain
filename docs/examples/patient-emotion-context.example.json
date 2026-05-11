@@ -1,0 +1,10 @@
+{
+  "patient_id": "pat-demo-0001",
+  "display_name": "Demo Patient A",
+  "source": "csv",
+  "row_index": 0,
+  "epoch_index": 0,
+  "csv_path": null,
+  "dreamer_processed_dir": null,
+  "cohort": "prompt-opinion-launchpad"
+}

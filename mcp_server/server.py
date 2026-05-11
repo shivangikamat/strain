@@ -6,8 +6,11 @@ STRAIN MCP server — ``strain-tools`` for Cursor, Prompt Opinion, or other MCP 
 **SSE (URL for Prompt Opinion + ngrok):**
 ``STRAIN_MCP_TRANSPORT=sse FASTMCP_HOST=0.0.0.0 FASTMCP_PORT=8765 STRAIN_MCP_RELAX_DNS=1 python -m mcp_server.server``
 
-Then tunnel ``8765`` and register ``https://<subdomain>.ngrok-free.app/sse`` (or your host + ``FASTMCP_SSE_PATH``) in the workspace.
-See ``docs/prompt-opinion-hackathon.md``.
+**Streamable HTTP (Prompt Opinion transport “Streamable HTTP”):**
+``STRAIN_MCP_TRANSPORT=streamable-http FASTMCP_HOST=0.0.0.0 FASTMCP_PORT=8765 STRAIN_MCP_RELAX_DNS=1 python -m mcp_server.server``
+(or ``./scripts/run_mcp_streamable_http.sh``). Register ``https://<subdomain>.ngrok-free.app/mcp`` (default path).
+
+See ``docs/mcp-setup-first-steps.md`` for matching Po transport ↔ URL path (``/sse`` vs ``/mcp``).
 """
 
 from __future__ import annotations
@@ -19,6 +22,7 @@ from typing import Any, Literal
 
 from mcp.server.fastmcp import Context, FastMCP
 from mcp.server.transport_security import TransportSecuritySettings
+from pydantic import ValidationError
 
 from strain.features.extract import extract_features
 from strain.io.catalog import load_dataset_meta
@@ -31,12 +35,35 @@ from strain.models.classifier import (
 from strain.io.fhir import generate_fhir_bundle
 from strain.pipelines.dreamer_analyze import analyze_dreamer_epoch
 from strain.screening.mental_health import screen_mental_health
+from strain.demo.patient_context import (
+    example_patient_context_dict,
+    format_screening_markdown,
+    parse_patient_context_json,
+    run_emotion_pipeline_for_context,
+)
+
+
+def _sse_bind_from_env() -> tuple[str, int]:
+    """FastMCP does not read FASTMCP_* from the environment unless passed into the constructor."""
+    host = os.environ.get("FASTMCP_HOST", "127.0.0.1")
+    raw_port = os.environ.get("FASTMCP_PORT", "8000")
+    try:
+        port = int(raw_port)
+    except ValueError:
+        port = 8000
+    return host, port
+
+
+_SSE_HOST, _SSE_PORT = _sse_bind_from_env()
 
 _MCP_INSTRUCTIONS = (
     "STRAIN v2.0 — healthcare hackathon prototype tools for EEG-derived emotion screening "
     "(tabular Kaggle features) and DREAMER multi-channel epochs (VAD regression). "
     "Outputs are for research and demonstration only — not a medical device. "
-    "Tools: load_dataset, CSV feature extraction/classification, DREAMER epoch features and VAD prediction."
+    "For Prompt Opinion BYO: use patient_screening_markdown_report_tool with JSON from "
+    "example_patient_emotion_context_json_tool to return Markdown tables + a dashboard deep link "
+    "(set STRAIN_PUBLIC_DASHBOARD_URL to your public Vite/ngrok origin). "
+    "MCP SSE/HTTP URL is only for tool transport — user-facing charts use the dashboard link in Markdown."
 )
 
 _mcp_relax_dns = os.environ.get("STRAIN_MCP_RELAX_DNS", "").lower() in ("1", "true", "yes")
@@ -44,6 +71,8 @@ _mcp_relax_dns = os.environ.get("STRAIN_MCP_RELAX_DNS", "").lower() in ("1", "tr
 mcp = FastMCP(
     "strain-tools",
     instructions=_MCP_INSTRUCTIONS,
+    host=_SSE_HOST,
+    port=_SSE_PORT,
     transport_security=TransportSecuritySettings(
         enable_dns_rebinding_protection=not _mcp_relax_dns,
     ),
@@ -199,6 +228,35 @@ def export_fhir_tool(
         return _json(generate_fhir_bundle(screening, patient_id=patient_id))
 
 
+@mcp.tool()
+def example_patient_emotion_context_json_tool() -> str:
+    """Example JSON object for a new demo patient (binds patient_id to CSV row 0). Use as a template in Po."""
+    return _json(example_patient_context_dict())
+
+
+@mcp.tool()
+def patient_screening_markdown_report_tool(
+    patient_context_json: str,
+    dashboard_base_url: str | None = None,
+) -> str:
+    """
+    Run emotion + demo screening for one PatientEmotionContext; return Markdown (tables, link).
+
+    Set dashboard_base_url or STRAIN_PUBLIC_DASHBOARD_URL (e.g. https://your-vite.ngrok-free.app)
+    so the report includes a clickable **Launch STRAIN dashboard** link. This is separate from the MCP SSE URL.
+    """
+    try:
+        ctx = parse_patient_context_json(patient_context_json)
+    except (json.JSONDecodeError, ValidationError) as e:
+        return _json({"error": "invalid_patient_context_json", "detail": str(e)})
+    base = (dashboard_base_url or os.environ.get("STRAIN_PUBLIC_DASHBOARD_URL") or "").strip() or None
+    try:
+        pipeline = run_emotion_pipeline_for_context(ctx)
+    except FileNotFoundError as e:
+        return _json({"error": "data_or_model_missing", "detail": str(e)})
+    return format_screening_markdown(ctx, pipeline, dashboard_base_url=base)
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="STRAIN MCP Server")
     parser.add_argument(
@@ -215,11 +273,14 @@ def main() -> None:
     args = parser.parse_args()
 
     if args.sse:
+        # FastMCP.run() does not accept host/port; mutate settings before serving.
+        mcp.settings.host = "127.0.0.1"
+        mcp.settings.port = args.port
         print(
             "Starting STRAIN FastMCP Server in SSE mode "
-            f"(127.0.0.1:{args.port})…"
+            f"({mcp.settings.host}:{mcp.settings.port})…"
         )
-        mcp.run(transport="sse", host="127.0.0.1", port=args.port)
+        mcp.run(transport="sse")
         return
 
     transport = os.environ.get("STRAIN_MCP_TRANSPORT", "stdio")

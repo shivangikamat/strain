@@ -70,10 +70,34 @@ type DreamerAnalyzeResponse = {
 
 type DataMode = 'csv' | 'dreamer'
 
+function readStrainQuery(): {
+  mode: DataMode
+  rowIndex: number
+  epochIndex: number
+  patientBanner: string | null
+} {
+  if (typeof window === 'undefined') {
+    return { mode: 'csv', rowIndex: 0, epochIndex: 0, patientBanner: null }
+  }
+  const q = new URLSearchParams(window.location.search)
+  const mode: DataMode = q.get('mode') === 'dreamer' ? 'dreamer' : 'csv'
+  const row = Number.parseInt(q.get('row') ?? '0', 10)
+  const epoch = Number.parseInt(q.get('epoch') ?? '0', 10)
+  const name = (q.get('patientName') ?? q.get('patientId') ?? '').trim()
+  return {
+    mode,
+    rowIndex: Number.isFinite(row) && row >= 0 ? row : 0,
+    epochIndex: Number.isFinite(epoch) && epoch >= 0 ? epoch : 0,
+    patientBanner: name.length > 0 ? name : null,
+  }
+}
+
 export default function App() {
-  const [mode, setMode] = useState<DataMode>('csv')
-  const [rowIndex, setRowIndex] = useState(0)
-  const [epochIndex, setEpochIndex] = useState(0)
+  const initial = readStrainQuery()
+  const [mode, setMode] = useState<DataMode>(initial.mode)
+  const [rowIndex, setRowIndex] = useState(initial.rowIndex)
+  const [epochIndex, setEpochIndex] = useState(initial.epochIndex)
+  const [patientBanner] = useState<string | null>(initial.patientBanner)
   const [csvData, setCsvData] = useState<CsvAnalyzeResponse | null>(null)
   const [dreamerData, setDreamerData] = useState<DreamerAnalyzeResponse | null>(null)
   const [csvMeta, setCsvMeta] = useState<{ n_samples?: number } | null>(null)
@@ -273,6 +297,12 @@ export default function App() {
           DESIGN SYSTEMS FOR ENTERPRISES<br/>
           Prototype emotion classification and non-clinical demo screening from tabular EEG features or DREAMER epochs.
         </p>
+
+        {patientBanner ? (
+          <p className="strain-deep-link-banner" role="status">
+            Viewing patient context: <strong>{patientBanner}</strong> (from dashboard link)
+          </p>
+        ) : null}
 
         <div className="hero-controls">
           <div className="mode-toggle" role="tablist" aria-label="Data source">
