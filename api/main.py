@@ -8,6 +8,7 @@ from typing import Any, Literal
 
 import matplotlib
 matplotlib.use("Agg")
+import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 import numpy as np
@@ -179,9 +180,9 @@ def brain_image(epoch_index: int) -> Response:
     ax.axis("off")
 
     # Scalp circle
-    scalp = plt.Circle((0, 0), 1.0, color="#1e1b2e", zorder=1)
+    scalp = mpatches.Circle((0, 0), 1.0, color="#1e1b2e", zorder=1)
     ax.add_patch(scalp)
-    scalp_ring = plt.Circle((0, 0), 1.0, color="#a855f7", fill=False, linewidth=1.5, zorder=2)
+    scalp_ring = mpatches.Circle((0, 0), 1.0, color="#a855f7", fill=False, linewidth=1.5, zorder=2)
     ax.add_patch(scalp_ring)
 
     # Nose
@@ -191,10 +192,10 @@ def brain_image(epoch_index: int) -> Response:
 
     # Left/right ear bumps
     for side in (-1, 1):
-        ear = plt.Arc((side * 1.0, 0), 0.18, 0.3, angle=0,
-                      theta1=90 if side < 0 else -90,
-                      theta2=270 if side < 0 else 90,
-                      color="#a855f7", linewidth=1.2, zorder=3)
+        ear = mpatches.Arc((side * 1.0, 0), 0.18, 0.3, angle=0,
+                           theta1=90 if side < 0 else -90,
+                           theta2=270 if side < 0 else 90,
+                           color="#a855f7", linewidth=1.2, zorder=3)
         ax.add_patch(ear)
 
     # Colormap: purple → yellow (matches STRAIN palette)
@@ -206,9 +207,9 @@ def brain_image(epoch_index: int) -> Response:
     for ch, (cx, cy) in _EPOC_POS.items():
         v = vals[ch]
         color = cmap(norm(v))
-        glow = plt.Circle((cx, cy), 0.11, color=(*color[:3], 0.18), zorder=4)
+        glow = mpatches.Circle((cx, cy), 0.11, color=(*color[:3], 0.18), zorder=4)
         ax.add_patch(glow)
-        dot = plt.Circle((cx, cy), 0.065, color=color, zorder=5)
+        dot = mpatches.Circle((cx, cy), 0.065, color=color, zorder=5)
         ax.add_patch(dot)
         ax.text(cx, cy - 0.17, ch, ha="center", va="top",
                 fontsize=5.5, color="#a1a1aa", zorder=6, fontfamily="monospace")
