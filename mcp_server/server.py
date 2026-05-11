@@ -18,6 +18,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+from pathlib import Path
 import traceback
 from typing import Any, Literal
 
@@ -344,12 +345,16 @@ _DEMO_PATIENT_IDS: dict[str, str] = {
     "james o'brien": "james-obrien",
     "james obrien": "james-obrien",
     "james-obrien": "james-obrien",
+    "sam": "sam-rivera",
+    "sam rivera": "sam-rivera",
+    "sam-rivera": "sam-rivera",
 }
 
 _DEMO_PATIENT_META: dict[str, dict[str, str]] = {
-    "alex-chen":   {"name": "Alex Chen",      "tag": "High Stress",       "epoch": "77160"},
-    "maria-santos": {"name": "Maria Santos",  "tag": "Calm & Focused",    "epoch": "1155"},
-    "james-obrien": {"name": "James O'Brien", "tag": "Elevated Arousal",  "epoch": "33830"},
+    "alex-chen":    {"name": "Alex Chen",      "tag": "High Stress",        "epoch": "77160"},
+    "maria-santos": {"name": "Maria Santos",   "tag": "Calm & Focused",     "epoch": "1155"},
+    "james-obrien": {"name": "James O'Brien",  "tag": "Elevated Arousal",   "epoch": "33830"},
+    "sam-rivera":   {"name": "Sam Rivera",     "tag": "Cognitive Overload",  "epoch": "12600"},
 }
 
 
@@ -378,7 +383,9 @@ def _recommendations(
         steps.append("**Anxiety markers elevated:** GAD-7 follow-up indicated. Progressive muscle relaxation exercises daily.")
     elif anx > 40:
         steps.append("**Mild anxiety signals:** Limit caffeine after noon. Introduce 10-min daily mindfulness practice.")
-    if cog > 65:
+    if cog >= 95:
+        steps.append("**Extreme cognitive overload (β/α > 50):** Immediate task offload recommended. Stop multitasking now. 20-minute low-stimulation break required before resuming work. ADHD screening (Conners Adult ADHD Rating Scale) indicated given sustained beta elevation pattern.")
+    elif cog > 65:
         steps.append("**High cognitive load:** Enforce 90-minute focused work cycles with mandatory 20-minute recovery. Avoid multitasking.")
     elif cog > 40:
         steps.append("**Moderate cognitive load:** Consider task-batching and single-session focus protocols.")
@@ -568,19 +575,30 @@ def analyze_named_patient_tool(
             md_lines.append(f"{i}. {step}")
         md_lines.append("")
 
+        report_url = f"{base}/api/report/{pid}"
         md_lines += [
             "---",
             "",
             f"[**Open interactive STRAIN dashboard →**]({dashboard_url})",
             "",
+            f"[**Download / view full report (Markdown) →**]({report_url})",
+            "",
             "> *STRAIN EEG screening is for research purposes. Not a medical device. Not for clinical diagnosis or treatment decisions.*",
         ]
 
         md = "\n".join(md_lines)
+
+        # Save report to disk so FastAPI can serve it as a viewable/downloadable file
+        _reports_dir = Path(__file__).parent.parent / "data" / "reports"
+        _reports_dir.mkdir(parents=True, exist_ok=True)
+        report_path = _reports_dir / f"{pid}.md"
+        report_path.write_text(md, encoding="utf-8")
+
         return _json({
             "format": "markdown",
             "markdown": md,
             "dashboard_url": dashboard_url,
+            "report_url": report_url,
             "patient_id": pid,
             "name": meta["name"],
             "epoch_index": epoch_idx,

@@ -1,3 +1,103 @@
+Shivangi Kamat
+shivangikamat
+In a call
+
+Vikcentric — 23:40
+?
+ok i'll make it and send it to yp
+you
+Shivangi Kamat — 23:40
+yayy
+i ate a glazed donut todayy
+2 mins
+Vikcentric — 23:43
+yeah physique checks out
+btw just to let u know
+i cant see ur video here
+coz its on the bg screen for me
+Shivangi Kamat — 23:43
+huh
+ohh
+Vikcentric — 23:43
+no not ur issue
+Shivangi Kamat — 23:43
+i pouted
+Vikcentric — 23:44
+lol
+yeah
+i know
+Shivangi Kamat — 23:44
+fat shaming is bad
+make up??
+Vikcentric — 23:44
+lol
+i think
+my brother is giving advice to his friend to buy a gift for his girl
+Shivangi Kamat — 23:45
+his girl, or he wants the girl
+Vikcentric — 23:45
+sounds like his girl
+Shivangi Kamat — 23:45
+ohh
+Vikcentric — 23:45
+what should he gift her
+Shivangi Kamat — 23:45
+hmm depends on the girl
+Vikcentric — 23:46
+prolly a high fashion bimbo ahh girl
+lol
+Shivangi Kamat — 23:46
+lol
+presumptious
+Vikcentric — 23:46
+its most likely true
+Shivangi Kamat — 23:46
+we dont know
+Vikcentric — 23:46
+given the types of gifts they are discussing
+and knowing the types of girls in ludhiana
+Shivangi Kamat — 23:47
+yes probably
+Vikcentric — 23:47
+its not a misogynistic thing
+istg
+its genuinely like this here
+Shivangi Kamat — 23:47
+yes i get it
+Vikcentric — 23:47
+ol
+lol
+Shivangi Kamat — 23:47
+so what we doing
+Vikcentric — 23:49
+wiat
+almost done with the profile
+Shivangi Kamat — 23:49
+nice
+Vikcentric — 23:49
+i might be wrong
+but i thought its called
+a geode
+actually
+amethyst crystal
+Image
+yep
+yeh
+its not off of amazon
+i bought it from an island in miami
+mmmmm
+later?
+"""FastAPI orchestrator for STRAIN."""
+
+from __future__ import annotations
+
+import io
+import os
+
+message.txt
+14 KB
+strain/api/main.py
+﻿
 """FastAPI orchestrator for STRAIN."""
 
 from __future__ import annotations
@@ -129,6 +229,17 @@ DEMO_PATIENTS: list[dict[str, Any]] = [
         "description": "High dominance, elevated beta activity. Active cognitive load detected.",
         "epoch_index": 33830,
         "accent": "yellow-orange",
+    },
+    {
+        "id": "sam-rivera",
+        "name": "Sam Rivera",
+        "avatar": "🧑‍🎓",
+        "age": 26,
+        "profession": "PhD Student",
+        "tag": "Cognitive Overload",
+        "description": "Racing thoughts, inability to focus, overwhelmed by deadlines. Extreme beta/theta activity consistent with ADHD-stress overlap.",
+        "epoch_index": 12600,
+        "accent": "red-orange",
     },
 ]
 
@@ -326,6 +437,21 @@ def export_fhir(body: ExportFhirRequest) -> dict[str, Any]:
         raise HTTPException(status_code=404, detail=str(e)) from e
 
 
+@api.get("/report/{patient_id}")
+def get_report(patient_id: str) -> Response:
+    """Serve the latest saved Markdown report for a patient as plain text (browser-viewable)."""
+    from pathlib import Path
+    report_path = Path(__file__).parent.parent / "data" / "reports" / f"{patient_id}.md"
+    if not report_path.exists():
+        raise HTTPException(status_code=404, detail=f"No report found for '{patient_id}'. Run analyze_named_patient_tool first.")
+    content = report_path.read_text(encoding="utf-8")
+    return Response(
+        content=content,
+        media_type="text/plain; charset=utf-8",
+        headers={"Content-Disposition": f'inline; filename="strain-report-{patient_id}.md"'},
+    )
+
+
 @api.get("/dataset/meta")
 def dataset_meta(csv_path: str | None = None) -> dict[str, Any]:
     try:
@@ -370,3 +496,4 @@ def train_dreamer_vad_endpoint(
 
 
 app.include_router(api)
+
