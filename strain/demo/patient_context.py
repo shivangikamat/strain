@@ -160,7 +160,7 @@ def format_screening_markdown(
             "| --- | ---: |",
             f"| Depression (demo) | {float(screen.get('depression_risk', {}).get('score', 0)):.2f}% |",
             f"| Anxiety (demo) | {float(screen.get('anxiety_risk', {}).get('score', 0)):.2f}% |",
-            f"| Cognitive composite (demo) | {float(screen.get('cognitive_risk', {}).get('score', 0)):.2f}% |",
+            f"| Cognitive load | {float(screen.get('cognitive_load', {}).get('score', 0)):.2f}% |",
             "",
             f"**Recommendation (demo codes):** `{screen.get('recommendation', '')}` — "
             f"{_REC_COPY.get(str(screen.get('recommendation', '')), 'See clinician in real life.')}",
@@ -194,9 +194,9 @@ def format_screening_markdown(
                 f"| Depression (demo) | {float(screen.get('depression_risk', {}).get('score', 0)):.2f}% |",
                 f"| Anxiety (demo) | {float(screen.get('anxiety_risk', {}).get('score', 0)):.2f}% |",
             ]
-            cog = screen.get("cognitive_risk")
+            cog = screen.get("cognitive_load")
             if isinstance(cog, dict) and "score" in cog:
-                lines.append(f"| Cognitive (demo) | {float(cog['score']):.2f}% |")
+                lines.append(f"| Cognitive load | {float(cog['score']):.2f}% |")
             lines += [
                 "",
                 f"**Recommendation:** `{screen.get('recommendation', '')}`",

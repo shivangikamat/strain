@@ -326,6 +326,13 @@ def patient_screening_markdown_report_tool(
         return _tool_fail("patient_screening_markdown_report_tool", e)
 
 
+_REC_CLINICAL: dict[str, str] = {
+    "no_concern": "No elevated neural markers in this scan window. Routine follow-up recommended.",
+    "monitor": "Subclinical markers detected. Recommend repeat screening in 4–6 weeks.",
+    "consult_pcp": "Elevated markers observed. Recommend consultation with a primary care provider.",
+    "seek_specialist": "Significant neural stress markers. Recommend specialist referral for further evaluation.",
+}
+
 _DEMO_PATIENT_IDS: dict[str, str] = {
     "alex": "alex-chen",
     "alex chen": "alex-chen",
@@ -344,6 +351,134 @@ _DEMO_PATIENT_META: dict[str, dict[str, str]] = {
     "maria-santos": {"name": "Maria Santos",  "tag": "Calm & Focused",    "epoch": "1155"},
     "james-obrien": {"name": "James O'Brien", "tag": "Elevated Arousal",  "epoch": "33830"},
 }
+
+
+@mcp.tool()
+def analyze_named_patient_tool(
+    patient_name: str,
+    dashboard_base_url: str | None = None,
+) -> str:
+    """
+    Run a full STRAIN EEG neural screening for a named enrolled patient and return a clinical report.
+
+    Accepts: "Alex Chen", "Maria Santos", "James O'Brien" (or first name / slug).
+    Returns JSON with a **markdown** field containing the full clinical report and dashboard link.
+
+    Set STRAIN_PUBLIC_DASHBOARD_URL or pass dashboard_base_url for the interactive dashboard link.
+    """
+    try:
+        key = patient_name.strip().lower()
+        pid = _DEMO_PATIENT_IDS.get(key)
+        if not pid:
+            available = ", ".join(m["name"] for m in _DEMO_PATIENT_META.values())
+            return _json({"error": "unknown_patient", "available": available, "received": patient_name})
+
+        meta = _DEMO_PATIENT_META[pid]
+        epoch_idx = int(meta["epoch"])
+
+        out = analyze_dreamer_epoch(epoch_idx)
+        pred = out.get("predicted_vad") or {}
+        screen = out.get("screening") or {}
+        expl = out.get("explanation") or {}
+        true_vad = out.get("true_vad") or {}
+        features = out.get("features") or {}
+        ratios = features.get("spectral_ratios") or {}
+
+        base = (dashboard_base_url or os.environ.get("STRAIN_PUBLIC_DASHBOARD_URL") or "").rstrip("/")
+        if not base:
+            base = "http://localhost:5173"
+        dashboard_url = f"{base}/?patient={pid}"
+
+        dep = float(screen.get("depression_risk", {}).get("score", 0))
+        anx = float(screen.get("anxiety_risk", {}).get("score", 0))
+        cog = float(screen.get("cognitive_load", {}).get("score", 0))
+        rec = screen.get("recommendation", "no_concern")
+        nl = expl.get("natural_language_explanation", "")
+
+        v_pred = pred.get("valence", "N/A")
+        a_pred = pred.get("arousal", "N/A")
+        d_pred = pred.get("dominance", "N/A")
+        v_true = true_vad.get("valence", "N/A")
+        a_true = true_vad.get("arousal", "N/A")
+        beta_alpha = ratios.get("beta_alpha", 0.0)
+        theta_alpha = ratios.get("theta_alpha", 0.0)
+
+        emotion = "POSITIVE" if isinstance(v_pred, float) and v_pred >= 3.5 else \
+                  "NEGATIVE" if isinstance(v_pred, float) and v_pred <= 2.5 else "NEUTRAL"
+
+        top_feats = []
+        for feats_list in expl.get("per_target_top_features", {}).values():
+            for f in feats_list:
+                top_feats.append(f)
+        seen: set[str] = set()
+        deduped = []
+        for f in sorted(top_feats, key=lambda x: abs(x.get("contribution", 0)), reverse=True):
+            if f.get("name") not in seen:
+                seen.add(f["name"])
+                deduped.append(f)
+        deduped = deduped[:5]
+
+        md_lines = [
+            f"## Neural EEG Screening Report — {meta['name']}",
+            "",
+            f"| Field | Value |",
+            f"| --- | --- |",
+            f"| **Patient** | {meta['name']} |",
+            f"| **Profile** | {meta['tag']} |",
+            f"| **EEG Source** | DREAMER dataset · Epoch {epoch_idx} · 14-channel EMOTIV EPOC+ |",
+            f"| **Signal** | 128 Hz · 2 s window · Welch PSD |",
+            f"| **Scan time** | {__import__('datetime').datetime.now().strftime('%Y-%m-%d %H:%M')} UTC |",
+            "",
+            "### Valence · Arousal · Dominance",
+            "",
+            "| Dimension | Predicted | Reference | Scale |",
+            "| --- | ---: | ---: | --- |",
+            f"| Valence | **{v_pred:.2f}** | {v_true:.2f} | 1–5 (low→high pleasantness) |" if isinstance(v_pred, float) else f"| Valence | N/A | {v_true} | — |",
+            f"| Arousal | **{a_pred:.2f}** | {a_true:.2f} | 1–5 (calm→activated) |" if isinstance(a_pred, float) else f"| Arousal | N/A | {a_true} | — |",
+            f"| Dominance | **{d_pred:.2f}** | — | 1–5 (low→high control) |" if isinstance(d_pred, float) else "| Dominance | N/A | — | — |",
+            f"| **Affective state** | **{emotion}** | | β/α={beta_alpha:.3f} · θ/α={theta_alpha:.3f} |",
+            "",
+            "### Neural Risk Indicators",
+            "",
+            "| Indicator | Score | Threshold |",
+            "| --- | ---: | --- |",
+            f"| Depression markers | **{dep:.1f}** / 100 | Alert >65 |",
+            f"| Anxiety markers | **{anx:.1f}** / 100 | Alert >65 |",
+            f"| Cognitive load | **{cog:.1f}** / 100 | Alert >65 |",
+            "",
+            f"**Clinical guidance:** {_REC_CLINICAL.get(rec, rec)}",
+            "",
+        ]
+
+        if nl:
+            md_lines += ["### Model Interpretation", "", nl, ""]
+
+        if deduped:
+            md_lines += ["### Top EEG Feature Contributions", ""]
+            for f in deduped:
+                sign = "+" if f.get("contribution", 0) >= 0 else ""
+                md_lines.append(f"- `{f['name']}` → {sign}{f.get('contribution', 0):.4f}")
+            md_lines.append("")
+
+        md_lines += [
+            "---",
+            "",
+            f"[**Open interactive STRAIN dashboard →**]({dashboard_url})",
+            "",
+            "> *STRAIN EEG screening is for research use only. Not a medical device. Not for clinical diagnosis or treatment decisions.*",
+        ]
+
+        md = "\n".join(md_lines)
+        return _json({
+            "format": "markdown",
+            "markdown": md,
+            "dashboard_url": dashboard_url,
+            "patient_id": pid,
+            "name": meta["name"],
+            "epoch_index": epoch_idx,
+        })
+    except Exception as e:
+        return _tool_fail("analyze_named_patient_tool", e)
 
 
 @mcp.tool()
