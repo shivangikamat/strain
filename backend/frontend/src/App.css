@@ -593,8 +593,8 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 2rem 1.5rem;
-  gap: 2.5rem;
+  padding: 1rem 1.5rem;
+  gap: 1.5rem;
   position: relative;
   z-index: 1;
 }
