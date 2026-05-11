@@ -42,42 +42,6 @@ app.add_middleware(
 
 _orch = Orchestrator()
 
-DEMO_PATIENTS: list[dict] = [
-    {
-        "id": "alex-chen",
-        "name": "Alex Chen",
-        "avatar": "👨‍💼",
-        "age": 32,
-        "profession": "Software Engineer",
-        "tag": "High Stress",
-        "description": "Reports elevated anxiety and poor sleep over the past 3 months.",
-        "epoch_index": 77160,
-        "accent": "purple-yellow",
-    },
-    {
-        "id": "maria-santos",
-        "name": "Maria Santos",
-        "avatar": "👩‍🎨",
-        "age": 28,
-        "profession": "Artist",
-        "tag": "Calm & Focused",
-        "description": "Meditative baseline. Strong alpha dominance and low arousal state.",
-        "epoch_index": 1155,
-        "accent": "cyan-purple",
-    },
-    {
-        "id": "james-obrien",
-        "name": "James O'Brien",
-        "avatar": "👴",
-        "age": 58,
-        "profession": "Executive",
-        "tag": "Elevated Arousal",
-        "description": "High dominance, elevated beta activity. Active cognitive load detected.",
-        "epoch_index": 33830,
-        "accent": "yellow-orange",
-    },
-]
-
 api = APIRouter(prefix="/api")
 
 
@@ -124,8 +88,45 @@ def health() -> dict[str, str]:
     return {"status": "ok"}
 
 
+DEMO_PATIENTS: list[dict[str, Any]] = [
+    {
+        "id": "alex-chen",
+        "name": "Alex Chen",
+        "avatar": "👨‍💼",
+        "age": 32,
+        "profession": "Software Engineer",
+        "tag": "High Stress",
+        "description": "Reports elevated anxiety and poor sleep over the past 3 months.",
+        "epoch_index": 77160,
+        "accent": "purple-yellow",
+    },
+    {
+        "id": "maria-santos",
+        "name": "Maria Santos",
+        "avatar": "👩‍🎨",
+        "age": 28,
+        "profession": "Artist",
+        "tag": "Calm & Focused",
+        "description": "Meditative baseline. Strong alpha dominance and low arousal state.",
+        "epoch_index": 1155,
+        "accent": "cyan-purple",
+    },
+    {
+        "id": "james-obrien",
+        "name": "James O'Brien",
+        "avatar": "👴",
+        "age": 58,
+        "profession": "Executive",
+        "tag": "Elevated Arousal",
+        "description": "High dominance, elevated beta activity. Active cognitive load detected.",
+        "epoch_index": 33830,
+        "accent": "yellow-orange",
+    },
+]
+
+
 @api.get("/demo-patients")
-def demo_patients() -> list[dict]:
+def demo_patients() -> list[dict[str, Any]]:
     """Return the 3 pre-crafted demo patient profiles."""
     return DEMO_PATIENTS
 
