@@ -41,6 +41,44 @@ export function ConnectScreen({ onStart }: Props) {
       </nav>
 
       <main className="connect-main">
+        <div className="lines-container">
+          <svg xmlns="http://www.w3.org/2000/svg">
+            <path d="M0,100 Q400,300 800,100 T1600,100 M0,300 Q400,100 800,300 T1600,300" />
+            <path d="M0,500 Q400,700 800,500 T1600,500" />
+            <path d="M400,0 L400,800 M1200,0 L1200,800" />
+          </svg>
+        </div>
+
+        {/* Floating Nodes */}
+        <div className="node n-top-left">
+          <div className="node-icon">✨</div>
+          <div className="node-content">
+            <span className="node-label">Live Inference</span>
+            <span className="node-value">It's easy</span>
+          </div>
+        </div>
+        <div className="node n-bottom-left">
+          <div className="node-icon orange">🧠</div>
+          <div className="node-content">
+            <span className="node-label">Current Row</span>
+            <span className="node-value">0</span>
+          </div>
+        </div>
+        <div className="node n-top-right">
+          <div className="node-icon yellow">⚡</div>
+          <div className="node-content">
+            <span className="node-label">Confidence</span>
+            <span className="node-value">I got it!</span>
+          </div>
+        </div>
+        <div className="node n-bottom-right">
+          <div className="node-icon">👤</div>
+          <div className="node-content">
+            <span className="node-label">Users</span>
+            <span className="node-value">More than 1,000</span>
+          </div>
+        </div>
+
         <div className="connect-hero-text">
           <h1>Connect your <span>EEG headset</span></h1>
           <p>
