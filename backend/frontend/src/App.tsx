@@ -1,5 +1,5 @@
 // src/App.tsx
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { ConnectScreen } from './components/ConnectScreen'
 import { ScanScreen } from './components/ScanScreen'
 import { ResultsScreen } from './components/ResultsScreen'
@@ -10,6 +10,20 @@ export default function App() {
   const [phase, setPhase] = useState<Phase>('connect')
   const [patient, setPatient] = useState<DemoPatient | null>(null)
   const [scanData, setScanData] = useState<DreamerAnalyzeResponse | null>(null)
+
+  // Deep-link: ?patient=alex-chen auto-starts scan for that patient
+  useEffect(() => {
+    const id = new URLSearchParams(window.location.search).get('patient')
+    if (!id) return
+    fetch('/api/demo-patients')
+      .then((r) => { if (!r.ok) throw new Error('not ok'); return r.json() })
+      .then((data: unknown) => {
+        if (!Array.isArray(data)) return
+        const match = (data as DemoPatient[]).find((p) => p.id === id)
+        if (match) { setPatient(match); setPhase('scanning') }
+      })
+      .catch(() => {})
+  }, [])
 
   const handleStart = (p: DemoPatient) => {
     setPatient(p)
