@@ -408,3 +408,31 @@
   border-radius: 8px !important;
   color: #f8fafc !important;
 }
+
+/* Print Styles for PDF Reports */
+@media print {
+  body {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  
+  .top-nav, 
+  .hero, 
+  .nav-btn,
+  .strain-deep-link-banner,
+  .white-section {
+    display: none !important;
+  }
+
+  .dashboard-content {
+    margin: 0;
+    padding: 0;
+  }
+
+  .panel {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+  }
+}

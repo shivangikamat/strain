@@ -371,7 +371,7 @@ export default function App() {
       <div className="dashboard-content">
         {mode === 'csv' && csvData && probChart && (
           <section className="panel" style={{ position: 'relative' }}>
-            <button className="nav-btn" style={{ position: 'absolute', top: '1.5rem', right: '1.5rem', padding: '0.5rem', minWidth: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center' }} title="Download Report">
+            <button onClick={() => window.print()} className="nav-btn" style={{ position: 'absolute', top: '1.5rem', right: '1.5rem', padding: '0.5rem', minWidth: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center' }} title="Download Report">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
             </button>
             <div className="grid3">
@@ -427,7 +427,7 @@ export default function App() {
         {mode === 'dreamer' && dreamerData && (
           <>
             <section className="panel" style={{ position: 'relative' }}>
-              <button className="nav-btn" style={{ position: 'absolute', top: '1.5rem', right: '1.5rem', padding: '0.5rem', minWidth: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center' }} title="Download Report">
+              <button onClick={() => window.print()} className="nav-btn" style={{ position: 'absolute', top: '1.5rem', right: '1.5rem', padding: '0.5rem', minWidth: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center' }} title="Download Report">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
               </button>
               <div className="grid3">

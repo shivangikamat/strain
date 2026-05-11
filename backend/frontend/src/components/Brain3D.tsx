@@ -215,7 +215,7 @@ export function Brain3D({ bandMeanPower }: { bandMeanPower: Record<string, numbe
     >
       <Canvas
         camera={{ position: [0, 0.15, 3.25], fov: 42 }}
-        gl={{ alpha: true, antialias: true, powerPreference: 'high-performance' }}
+        gl={{ alpha: true, antialias: true, powerPreference: 'high-performance', preserveDrawingBuffer: true }}
         style={{ display: 'block', width: '100%', height: '100%', maxWidth: '100%' }}
         dpr={[1, 2]}
       >
