@@ -26,7 +26,12 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = ["jupyter>=1.0", "ipykernel>=6.29", "kaggle>=1.6"]
+dev = ["jupyter>=1.0", "ipykernel>=6.29", "kaggle>=1.6", "pytest>=8.0"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = "-ra"
 
 [tool.hatch.build.targets.wheel]
 packages = ["strain"]

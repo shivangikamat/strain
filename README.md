@@ -1,5 +1,7 @@
 # STRAIN
 
+[![CI](https://github.com/shivangikamat/strain/actions/workflows/ci.yml/badge.svg)](https://github.com/shivangikamat/strain/actions/workflows/ci.yml)
+
 Hackathon prototype: emotion classification and **non-clinical** demo screening from Kaggle-style tabular EEG features in [`data/emotions.csv`](data/emotions.csv) (default path; override with `STRAIN_EMOTIONS_CSV`).
 
 ## DREAMER — real multi-channel EEG epoch tensors (recommended next step)
@@ -65,6 +67,19 @@ EDA script:
 ```bash
 python -m strain.eda.kaggle_brainwave
 ```
+
+## Docker Compose (API + UI)
+
+From the repo root (Docker required):
+
+```bash
+docker compose up --build
+```
+
+- **Browser:** [http://localhost:8080](http://localhost:8080) — nginx serves the Vite build and proxies `/api/` to the `api` service.
+- **API direct:** [http://localhost:8000](http://localhost:8000) (e.g. `GET /health`).
+
+For CSV-backed routes in containers, bind-mount `data/emotions.csv` and `strain/models/baseline_pipeline.joblib` (see comments in [`docker-compose.yml`](docker-compose.yml)).
 
 ## API + UI
 
