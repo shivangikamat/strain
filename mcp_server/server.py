@@ -353,20 +353,58 @@ _DEMO_PATIENT_META: dict[str, dict[str, str]] = {
 }
 
 
+def _quickchart_url(cfg: dict) -> str:
+    """Encode a QuickChart config as a URL (public, no API key needed)."""
+    import urllib.parse, json as _json_mod
+    return "https://quickchart.io/chart?w=500&h=220&bkg=%230d0b14&c=" + urllib.parse.quote(
+        _json_mod.dumps(cfg, separators=(",", ":"))
+    )
+
+
+def _recommendations(
+    dep: float, anx: float, cog: float,
+    v_pred: float | str, a_pred: float | str, emotion: str,
+) -> list[str]:
+    steps: list[str] = []
+    if isinstance(v_pred, float) and v_pred <= 2.5:
+        steps.append("**Behavioral activation:** Schedule two enjoyable activities per day to counter low-valence patterns.")
+    if isinstance(a_pred, float) and a_pred >= 3.5:
+        steps.append("**Arousal regulation:** Practice 4-7-8 breathing (inhale 4s, hold 7s, exhale 8s) before high-demand tasks.")
+    if dep > 65:
+        steps.append("**Depression markers elevated:** Initiate PHQ-9 structured assessment. Consider MBSR referral.")
+    elif dep > 40:
+        steps.append("**Subclinical depression signals:** Weekly mood journaling + 30 min aerobic activity recommended.")
+    if anx > 65:
+        steps.append("**Anxiety markers elevated:** GAD-7 follow-up indicated. Progressive muscle relaxation exercises daily.")
+    elif anx > 40:
+        steps.append("**Mild anxiety signals:** Limit caffeine after noon. Introduce 10-min daily mindfulness practice.")
+    if cog > 65:
+        steps.append("**High cognitive load:** Enforce 90-minute focused work cycles with mandatory 20-minute recovery. Avoid multitasking.")
+    elif cog > 40:
+        steps.append("**Moderate cognitive load:** Consider task-batching and single-session focus protocols.")
+    if emotion == "POSITIVE" and dep <= 40 and anx <= 40:
+        steps.append("**Positive baseline detected:** Current stress-management strategies appear effective. Maintain sleep schedule and exercise routine.")
+    if not steps:
+        steps.append("No significant neural stress markers in this scan window. Maintain current wellness practices.")
+    return steps
+
+
 @mcp.tool()
 def analyze_named_patient_tool(
     patient_name: str,
     dashboard_base_url: str | None = None,
 ) -> str:
     """
-    Run a full STRAIN EEG neural screening for a named enrolled patient and return a clinical report.
+    Run a full STRAIN EEG neural screening for a named enrolled patient.
 
     Accepts: "Alex Chen", "Maria Santos", "James O'Brien" (or first name / slug).
-    Returns JSON with a **markdown** field containing the full clinical report and dashboard link.
+    Returns JSON with a **markdown** field — the full clinical report with brain scan image,
+    risk charts, VAD charts, model interpretation, and personalised recommended steps.
 
-    Set STRAIN_PUBLIC_DASHBOARD_URL or pass dashboard_base_url for the interactive dashboard link.
+    Set STRAIN_PUBLIC_DASHBOARD_URL or pass dashboard_base_url for image and dashboard URLs.
     """
     try:
+        import datetime
         key = patient_name.strip().lower()
         pid = _DEMO_PATIENT_IDS.get(key)
         if not pid:
@@ -388,6 +426,7 @@ def analyze_named_patient_tool(
         if not base:
             base = "http://localhost:5173"
         dashboard_url = f"{base}/?patient={pid}"
+        brain_img_url = f"{base}/api/brain-image/{epoch_idx}"
 
         dep = float(screen.get("depression_risk", {}).get("score", 0))
         anx = float(screen.get("anxiety_risk", {}).get("score", 0))
@@ -400,6 +439,7 @@ def analyze_named_patient_tool(
         d_pred = pred.get("dominance", "N/A")
         v_true = true_vad.get("valence", "N/A")
         a_true = true_vad.get("arousal", "N/A")
+        d_true = true_vad.get("dominance", "N/A")
         beta_alpha = ratios.get("beta_alpha", 0.0)
         theta_alpha = ratios.get("theta_alpha", 0.0)
 
@@ -408,8 +448,7 @@ def analyze_named_patient_tool(
 
         top_feats = []
         for feats_list in expl.get("per_target_top_features", {}).values():
-            for f in feats_list:
-                top_feats.append(f)
+            top_feats.extend(feats_list)
         seen: set[str] = set()
         deduped = []
         for f in sorted(top_feats, key=lambda x: abs(x.get("contribution", 0)), reverse=True):
@@ -418,54 +457,123 @@ def analyze_named_patient_tool(
                 deduped.append(f)
         deduped = deduped[:5]
 
+        # QuickChart — risk bar chart
+        risk_chart = _quickchart_url({
+            "type": "horizontalBar",
+            "data": {
+                "labels": ["Depression", "Anxiety", "Cognitive Load"],
+                "datasets": [{
+                    "data": [round(dep, 1), round(anx, 1), round(cog, 1)],
+                    "backgroundColor": ["rgba(168,85,247,0.85)", "rgba(251,191,36,0.85)", "rgba(6,182,212,0.85)"],
+                    "borderColor": ["#a855f7", "#fbbf24", "#06b6d4"],
+                    "borderWidth": 1,
+                }],
+            },
+            "options": {
+                "legend": {"display": False},
+                "title": {"display": True, "text": "Neural Risk Indicators (/100)", "fontColor": "#a1a1aa"},
+                "scales": {
+                    "xAxes": [{"ticks": {"min": 0, "max": 100, "fontColor": "#71717a"}, "gridLines": {"color": "#27272a"}}],
+                    "yAxes": [{"ticks": {"fontColor": "#a1a1aa"}, "gridLines": {"display": False}}],
+                },
+            },
+        })
+
+        # QuickChart — VAD grouped bar
+        vad_labels = ["Valence", "Arousal", "Dominance"]
+        pred_vals = [
+            round(v_pred, 2) if isinstance(v_pred, float) else 0,
+            round(a_pred, 2) if isinstance(a_pred, float) else 0,
+            round(d_pred, 2) if isinstance(d_pred, float) else 0,
+        ]
+        true_vals = [
+            round(v_true, 2) if isinstance(v_true, float) else 0,
+            round(a_true, 2) if isinstance(a_true, float) else 0,
+            round(d_true, 2) if isinstance(d_true, float) else 0,
+        ]
+        vad_chart = _quickchart_url({
+            "type": "bar",
+            "data": {
+                "labels": vad_labels,
+                "datasets": [
+                    {"label": "Predicted", "data": pred_vals,
+                     "backgroundColor": "rgba(168,85,247,0.85)", "borderColor": "#a855f7", "borderWidth": 1},
+                    {"label": "Reference", "data": true_vals,
+                     "backgroundColor": "rgba(34,211,238,0.55)", "borderColor": "#22d3ee", "borderWidth": 1},
+                ],
+            },
+            "options": {
+                "title": {"display": True, "text": "Affective State — Predicted vs Reference (1–5)", "fontColor": "#a1a1aa"},
+                "scales": {
+                    "yAxes": [{"ticks": {"min": 0, "max": 5, "fontColor": "#71717a"}, "gridLines": {"color": "#27272a"}}],
+                    "xAxes": [{"ticks": {"fontColor": "#a1a1aa"}, "gridLines": {"display": False}}],
+                },
+                "legend": {"labels": {"fontColor": "#a1a1aa"}},
+            },
+        })
+
+        recs = _recommendations(dep, anx, cog, v_pred, a_pred, emotion)
+
         md_lines = [
-            f"## Neural EEG Screening Report — {meta['name']}",
+            f"## Neural EEG Screening — {meta['name']}",
             "",
-            f"| Field | Value |",
+            f"| | |",
             f"| --- | --- |",
             f"| **Patient** | {meta['name']} |",
             f"| **Profile** | {meta['tag']} |",
-            f"| **EEG Source** | DREAMER dataset · Epoch {epoch_idx} · 14-channel EMOTIV EPOC+ |",
-            f"| **Signal** | 128 Hz · 2 s window · Welch PSD |",
-            f"| **Scan time** | {__import__('datetime').datetime.now().strftime('%Y-%m-%d %H:%M')} UTC |",
+            f"| **EEG** | 14-ch EMOTIV EPOC+ · 128 Hz · 2 s epoch · Welch PSD |",
+            f"| **Affective state** | **{emotion}** · β/α {beta_alpha:.3f} · θ/α {theta_alpha:.3f} |",
+            f"| **Scan** | {datetime.datetime.now().strftime('%Y-%m-%d %H:%M')} UTC · Epoch {epoch_idx} |",
+            "",
+            "### EEG Electrode Activation Map",
+            "",
+            f"![EEG Brain Scan — {meta['name']}]({brain_img_url})",
             "",
             "### Valence · Arousal · Dominance",
             "",
-            "| Dimension | Predicted | Reference | Scale |",
-            "| --- | ---: | ---: | --- |",
-            f"| Valence | **{v_pred:.2f}** | {v_true:.2f} | 1–5 (low→high pleasantness) |" if isinstance(v_pred, float) else f"| Valence | N/A | {v_true} | — |",
-            f"| Arousal | **{a_pred:.2f}** | {a_true:.2f} | 1–5 (calm→activated) |" if isinstance(a_pred, float) else f"| Arousal | N/A | {a_true} | — |",
-            f"| Dominance | **{d_pred:.2f}** | — | 1–5 (low→high control) |" if isinstance(d_pred, float) else "| Dominance | N/A | — | — |",
-            f"| **Affective state** | **{emotion}** | | β/α={beta_alpha:.3f} · θ/α={theta_alpha:.3f} |",
+            f"![VAD Chart]({vad_chart})",
+            "",
+            "| Dimension | Predicted | Reference |",
+            "| --- | ---: | ---: |",
+            f"| Valence | **{v_pred:.2f}** | {v_true:.2f} |" if isinstance(v_pred, float) else "| Valence | N/A | — |",
+            f"| Arousal | **{a_pred:.2f}** | {a_true:.2f} |" if isinstance(a_pred, float) else "| Arousal | N/A | — |",
+            f"| Dominance | **{d_pred:.2f}** | {d_true:.2f} |" if isinstance(d_pred, float) else "| Dominance | N/A | — |",
             "",
             "### Neural Risk Indicators",
             "",
-            "| Indicator | Score | Threshold |",
-            "| --- | ---: | --- |",
-            f"| Depression markers | **{dep:.1f}** / 100 | Alert >65 |",
-            f"| Anxiety markers | **{anx:.1f}** / 100 | Alert >65 |",
-            f"| Cognitive load | **{cog:.1f}** / 100 | Alert >65 |",
+            f"![Risk Chart]({risk_chart})",
             "",
-            f"**Clinical guidance:** {_REC_CLINICAL.get(rec, rec)}",
+            "| Indicator | Score | Status |",
+            "| --- | ---: | --- |",
+            f"| Depression markers | **{dep:.1f}** / 100 | {'⚠ Elevated' if dep > 65 else '✓ Normal'} |",
+            f"| Anxiety markers | **{anx:.1f}** / 100 | {'⚠ Elevated' if anx > 65 else '✓ Normal'} |",
+            f"| Cognitive load | **{cog:.1f}** / 100 | {'⚠ Elevated' if cog > 65 else '✓ Normal'} |",
+            "",
+            f"**Assessment:** {_REC_CLINICAL.get(rec, rec)}",
             "",
         ]
 
         if nl:
-            md_lines += ["### Model Interpretation", "", nl, ""]
+            md_lines += ["### EEG Model Interpretation", "", nl, ""]
 
         if deduped:
-            md_lines += ["### Top EEG Feature Contributions", ""]
+            md_lines += ["### Top Signal Contributions", ""]
             for f in deduped:
                 sign = "+" if f.get("contribution", 0) >= 0 else ""
                 md_lines.append(f"- `{f['name']}` → {sign}{f.get('contribution', 0):.4f}")
             md_lines.append("")
+
+        md_lines += ["### Recommended Next Steps", ""]
+        for i, step in enumerate(recs, 1):
+            md_lines.append(f"{i}. {step}")
+        md_lines.append("")
 
         md_lines += [
             "---",
             "",
             f"[**Open interactive STRAIN dashboard →**]({dashboard_url})",
             "",
-            "> *STRAIN EEG screening is for research use only. Not a medical device. Not for clinical diagnosis or treatment decisions.*",
+            "> *STRAIN EEG screening is for research purposes. Not a medical device. Not for clinical diagnosis or treatment decisions.*",
         ]
 
         md = "\n".join(md_lines)
