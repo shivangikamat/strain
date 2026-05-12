@@ -1,6 +1,7 @@
 // src/components/ConnectScreen.tsx
 import { useCallback, useEffect, useState } from 'react'
 import type { DemoPatient } from '../types'
+import { apiUrl } from '../apiBase'
 
 interface Props {
   onStart: (patient: DemoPatient) => void
@@ -12,7 +13,7 @@ export function ConnectScreen({ onStart }: Props) {
   const [detecting, setDetecting] = useState(true)
 
   useEffect(() => {
-    fetch('/api/demo-patients')
+    fetch(apiUrl('/api/demo-patients'))
       .then((r) => { if (!r.ok) throw new Error('not ok'); return r.json() })
       .then((data: unknown) => { if (Array.isArray(data)) setPatients(data as DemoPatient[]) })
       .catch(() => {/* API unreachable — start button stays disabled */ })

@@ -4,6 +4,7 @@ import { ConnectScreen } from './components/ConnectScreen'
 import { ScanScreen } from './components/ScanScreen'
 import { ResultsScreen } from './components/ResultsScreen'
 import type { DemoPatient, DreamerAnalyzeResponse, Phase } from './types'
+import { apiUrl } from './apiBase'
 import './App.css'
 
 export default function App() {
@@ -15,7 +16,7 @@ export default function App() {
   useEffect(() => {
     const id = new URLSearchParams(window.location.search).get('patient')
     if (!id) return
-    fetch('/api/demo-patients')
+    fetch(apiUrl('/api/demo-patients'))
       .then((r) => { if (!r.ok) throw new Error('not ok'); return r.json() })
       .then((data: unknown) => {
         if (!Array.isArray(data)) return

@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Brain3D } from './Brain3D'
 import type { DemoPatient, DreamerAnalyzeResponse } from '../types'
+import { apiUrl } from '../apiBase'
 
 const CHANNELS = ['AF3', 'F7', 'F3', 'FC5', 'T7', 'P7', 'O1', 'O2', 'P8', 'T8', 'FC6', 'F4', 'F8', 'AF4'] as const
 
@@ -58,7 +59,7 @@ export function ScanScreen({ patient, onComplete }: Props) {
 
   useEffect(() => {
     // Fire API call
-    fetch('/api/analyze/dreamer', {
+    fetch(apiUrl('/api/analyze/dreamer'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ epoch_index: patient.epoch_index }),
