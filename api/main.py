@@ -5,6 +5,7 @@ from __future__ import annotations
 import io
 import os
 from typing import Any, Literal
+from urllib.parse import urlparse
 
 import matplotlib
 matplotlib.use("Agg")
@@ -32,13 +33,29 @@ from strain.demo.patient_context import (
 
 app = FastAPI(title="STRAIN API", version="0.1.0")
 
-_cors_base = ["http://localhost:5173", "http://127.0.0.1:5173"]
-_cors_extra = os.environ.get("STRAIN_CORS_ORIGINS", "").strip()
-if _cors_extra:
-    _cors_base = [
-        *_cors_base,
-        *[o.strip() for o in _cors_extra.split(",") if o.strip()],
+
+def _parse_cors_origins() -> list[str]:
+    """Origins allowed for browser requests (dashboard + optional comma-separated extras)."""
+    raw: list[str] = [
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        *[o.strip() for o in os.environ.get("STRAIN_CORS_ORIGINS", "").split(",") if o.strip()],
     ]
+    dash = os.environ.get("STRAIN_PUBLIC_DASHBOARD_URL", "").strip()
+    if dash:
+        p = urlparse(dash)
+        if p.scheme and p.netloc:
+            raw.append(f"{p.scheme}://{p.netloc}")
+    seen: set[str] = set()
+    out: list[str] = []
+    for o in raw:
+        if o not in seen:
+            seen.add(o)
+            out.append(o)
+    return out
+
+
+_cors_base = _parse_cors_origins()
 
 app.add_middleware(
     CORSMiddleware,

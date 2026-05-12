@@ -36,7 +36,7 @@ def test_demo_patients_returns_three_profiles() -> None:
     r = client.get("/api/demo-patients")
     assert r.status_code == 200
     data = r.json()
-    assert len(data) == 3
+    assert len(data) == 4
     for p in data:
         assert "id" in p
         assert "name" in p
