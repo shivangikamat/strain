@@ -2,6 +2,8 @@
 
 [![CI](https://github.com/shivangikamat/strain/actions/workflows/ci.yml/badge.svg)](https://github.com/shivangikamat/strain/actions/workflows/ci.yml)
 
+**Live site:** [https://strain-frontend.onrender.com/](https://strain-frontend.onrender.com/)
+
 Hackathon prototype: emotion classification and **non-clinical** demo screening from Kaggle-style tabular EEG features in [`data/emotions.csv`](data/emotions.csv) (default path; override with `STRAIN_EMOTIONS_CSV`).
 
 ## DREAMER — real multi-channel EEG epoch tensors (recommended next step)
