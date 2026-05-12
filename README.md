@@ -4,6 +4,8 @@
 
 **Live site:** [https://strain-frontend.onrender.com/](https://strain-frontend.onrender.com/)
 
+**Demo video (YouTube):** [https://youtu.be/VIGOZ7KDknk](https://youtu.be/VIGOZ7KDknk)
+
 Hackathon prototype: emotion classification and **non-clinical** demo screening from Kaggle-style tabular EEG features in [`data/emotions.csv`](data/emotions.csv) (default path; override with `STRAIN_EMOTIONS_CSV`).
 
 ## DREAMER — real multi-channel EEG epoch tensors (recommended next step)
